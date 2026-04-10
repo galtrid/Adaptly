@@ -5,59 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Create Account — Adapty</title>
   <link rel="stylesheet" href="sidebar.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="adapty.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body class="has-sidebar">
-  <div class="auth-page">
-    <div class="auth-card">
+  <main class="login-page">
+    <section class="login-card register-card" aria-label="Sign up panel">
+      <img src="alpha.png" alt="Adaptly logo" class="login-icon" />
+      <h1 class="login-title">Get Started</h1>
+      <p class="login-subtitle">Create your free account and start learning smarter</p>
 
-      <!-- Brand -->
-      <div class="auth-brand">
-        <div class="auth-brand__mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
-          </svg>
-        </div>
-        <span class="auth-brand__name">adapty</span>
-      </div>
-
-      <h1>Get started</h1>
-      <p class="subtitle">Create your free account and start learning smarter</p>
-
-      <form id="registerForm" class="auth-form" novalidate>
+      <form id="registerForm" class="login-form" novalidate>
 
         <label class="sr-only" for="regUsername">Username</label>
-        <input id="regUsername" type="text" placeholder="Username"
+        <input id="regUsername" class="login-input" type="text" placeholder="Username"
                autocomplete="username" required />
 
         <label class="sr-only" for="regEmail">Email</label>
-        <input id="regEmail" type="email" placeholder="Email"
+        <input id="regEmail" class="login-input" type="email" placeholder="Email"
                autocomplete="email" required />
 
         <label class="sr-only" for="regPassword">Password</label>
-        <input id="regPassword" type="password" placeholder="Password (min 6 chars)"
+        <input id="regPassword" class="login-input" type="password" placeholder="Password"
                autocomplete="new-password" required />
 
-        <label class="sr-only" for="regConfirm">Confirm password</label>
-        <input id="regConfirm" type="password" placeholder="Confirm password"
+        <label class="sr-only" for="regConfirm">Confirm Password</label>
+        <input id="regConfirm" class="login-input" type="password" placeholder="Confirm Password"
                autocomplete="new-password" required />
 
-        <div id="registerStatus" class="auth-status" role="alert" aria-live="polite"></div>
+        <div id="registerStatus" class="login-status" role="alert" aria-live="polite"></div>
 
-        <button id="registerBtn" type="submit" class="auth-btn">Create account</button>
+        <button id="registerBtn" type="submit" class="login-button">Create Account</button>
       </form>
 
-      <p class="auth-footer">
+      <p class="login-footer">
         Already have an account?
-        <a href="login.html" class="auth-link">Sign in</a>
+        <a href="login.html">Log in.</a>
       </p>
 
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script src="sidebar.js"></script>
   <script src="register.js"></script>

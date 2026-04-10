@@ -84,17 +84,16 @@ function setLoading(on) {
 
 function showError(msg) {
     statusEl.textContent = msg;
-    statusEl.className   = "auth-status is-error";
+    statusEl.style.color = "#8d203d";
 }
 
 function showSuccess(msg) {
     statusEl.textContent = msg;
-    statusEl.className   = "auth-status is-success";
+    statusEl.style.color = "green";
 }
 
 function clearStatus() {
     statusEl.textContent = "";
-    statusEl.className   = "auth-status";
 }
 
 async function parseJSON(res) {

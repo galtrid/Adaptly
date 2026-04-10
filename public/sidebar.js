@@ -76,6 +76,25 @@
     `;
   }
 
+  function iconThemeSun() {
+    // Sun icon for light mode
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" stroke-width="2">
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    `;
+  }
+
+  function iconThemeMoon() {
+    // Moon icon for dark mode
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+      </svg>
+    `;
+  }
+
   function buildSidebar() {
     if (document.querySelector(".app-sidebar")) {
       return;
@@ -90,8 +109,10 @@
     sidebar.innerHTML = `
       <div class="app-sidebar__rail">
         <button class="app-sidebar__brand" type="button" aria-label="Ureeka home">
-          <span class="app-sidebar__brand-mark">α</span>
+          <img src="alpha.png" alt="Adaptly logo" class="app-sidebar__brand-mark" id="sidebarBrandImg" />
         </button>
+
+        <div class="app-sidebar__active-bg" aria-hidden="true"></div>
 
         <button class="app-sidebar__item app-sidebar__item--active app-sidebar__item--home" type="button" aria-label="Home">
           ${iconHome()}
@@ -99,6 +120,10 @@
 
         <button class="app-sidebar__item app-sidebar__item--apps" type="button" aria-label="Roadmaps">
           ${iconApps()}
+        </button>
+
+        <button id="themeToggleBtn" class="app-sidebar__item app-sidebar__item--theme" type="button" aria-label="Toggle theme">
+          <span class="theme-icon-container"></span>
         </button>
 
         <button class="app-sidebar__item app-sidebar__item--settings" type="button" aria-label="Settings">
@@ -118,6 +143,31 @@
     `;
 
     document.body.insertBefore(sidebar, document.body.firstChild);
+    
+    // Theme toggle setup
+    const themeBtn = document.getElementById("themeToggleBtn");
+    const themeIconContainer = themeBtn.querySelector(".theme-icon-container");
+    const brandImg = document.getElementById("sidebarBrandImg");
+
+    function updateThemeUI(theme) {
+      if (theme === "dark") {
+        themeIconContainer.innerHTML = iconThemeMoon();
+        brandImg.src = "alpha-dark.png";
+      } else {
+        themeIconContainer.innerHTML = iconThemeSun();
+        brandImg.src = "alpha.png";
+      }
+    }
+
+    // Set initial icon and internal state
+    const currentTheme = getPreferredTheme();
+    updateThemeUI(currentTheme);
+
+    themeBtn.addEventListener("click", () => {
+      const newTheme = document.body.dataset.sidebarTheme === "dark" ? "light" : "dark";
+      window.setSidebarTheme(newTheme);
+      updateThemeUI(newTheme);
+    });
   }
 
   function init() {

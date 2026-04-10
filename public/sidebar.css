@@ -83,14 +83,13 @@ body[data-sidebar-theme="dark"] {
   border-radius: 10px;
   background: var(--sidebar-brand-bg);
   color: var(--sidebar-brand-fg);
+  overflow: hidden;
 }
 
 .app-sidebar__brand-mark {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 25px;
-  line-height: 1;
-  font-style: italic;
-  transform: translateY(-1px);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .app-sidebar__item {
@@ -99,13 +98,15 @@ body[data-sidebar-theme="dark"] {
   height: 24px;
 }
 
-.app-sidebar__item--active {
+.app-sidebar__active-bg {
+  position: absolute;
   left: 26px;
   top: 116px;
   width: 48px;
   height: 48px;
   border-radius: 10px;
   background: var(--sidebar-selected);
+  pointer-events: none;
 }
 
 .app-sidebar__item--home {
@@ -120,7 +121,12 @@ body[data-sidebar-theme="dark"] {
 
 .app-sidebar__item--settings {
   left: 38px;
-  bottom: 109px;
+  bottom: 85px;
+}
+
+.app-sidebar__item--theme {
+  left: 38px;
+  bottom: 140px;
 }
 
 .app-sidebar__item--profile {
