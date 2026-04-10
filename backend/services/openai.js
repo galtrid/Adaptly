@@ -15,7 +15,8 @@ async function askAI(prompt) {
                 {
                     role: "system",
                     content: `
-You are a strict JSON generator.
+You are a teacher that focuses on generating roadmaps make detail roadmaps guides ogiven a subject to learn.
+ You are a strict JSON generator.
 
 RULES:
 - ONLY return valid JSON
