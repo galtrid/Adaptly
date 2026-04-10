@@ -1,0 +1,215 @@
+/* Shared sidebar used across the site */
+
+:root {
+  --sidebar-collapsed-width: 100px;
+  --sidebar-expanded-width: 387px;
+  --sidebar-corner-radius: 20px;
+  --sidebar-rail-radius: 10px;
+  --sidebar-transition: 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.has-sidebar {
+  overflow-x: hidden;
+  padding-left: var(--sidebar-collapsed-width);
+}
+
+body[data-sidebar-theme="light"] {
+  --sidebar-base: #ffdffb;
+  --sidebar-selected: rgba(59, 10, 29, 0.15);
+  --sidebar-primary: #3b0a1d;
+  --sidebar-panel-bg: #eab5e3;
+  --sidebar-panel-border: rgba(225, 141, 214, 0.47);
+  --sidebar-panel-shadow: rgba(59, 10, 31, 0.1);
+  --sidebar-icon: #3b0a1d;
+  --sidebar-brand-bg: #3b0a1d;
+  --sidebar-brand-fg: #ffdffb;
+}
+
+body[data-sidebar-theme="dark"] {
+  --sidebar-base: #3b0a1d;
+  --sidebar-selected: rgba(240, 222, 221, 0.15);
+  --sidebar-primary: #f0dedd;
+  --sidebar-panel-bg: #501c30;
+  --sidebar-panel-border: #4e0c26;
+  --sidebar-panel-shadow: rgba(5, 0, 2, 0.1);
+  --sidebar-icon: #f0dedd;
+  --sidebar-brand-bg: #f0dedd;
+  --sidebar-brand-fg: #3b0a1d;
+}
+
+.app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar-collapsed-width);
+  background: var(--sidebar-base);
+  border-top-right-radius: var(--sidebar-corner-radius);
+  border-bottom-right-radius: var(--sidebar-corner-radius);
+  overflow: clip;
+  z-index: 30;
+  transition: width var(--sidebar-transition);
+  will-change: width;
+}
+
+.app-sidebar:hover,
+.app-sidebar:focus-within {
+  width: var(--sidebar-expanded-width);
+}
+
+.app-sidebar__rail {
+  position: relative;
+  width: var(--sidebar-collapsed-width);
+  height: 100%;
+  overflow: clip;
+}
+
+.app-sidebar__brand,
+.app-sidebar__item {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--sidebar-icon);
+  display: grid;
+  place-items: center;
+}
+
+.app-sidebar__brand {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  width: 40px;
+  height: 39px;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  background: var(--sidebar-brand-bg);
+  color: var(--sidebar-brand-fg);
+}
+
+.app-sidebar__brand-mark {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  line-height: 1;
+  font-style: italic;
+  transform: translateY(-1px);
+}
+
+.app-sidebar__item {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+}
+
+.app-sidebar__item--active {
+  left: 26px;
+  top: 116px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--sidebar-selected);
+}
+
+.app-sidebar__item--home {
+  left: 38px;
+  top: 128px;
+}
+
+.app-sidebar__item--apps {
+  left: 38px;
+  top: 183px;
+}
+
+.app-sidebar__item--settings {
+  left: 38px;
+  bottom: 109px;
+}
+
+.app-sidebar__item--profile {
+  left: 38px;
+  bottom: 30px;
+}
+
+.app-sidebar__item svg,
+.app-sidebar__brand svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-sidebar__item--active svg {
+  width: 24px;
+  height: 24px;
+}
+
+.app-sidebar__panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.app-sidebar:hover .app-sidebar__panel,
+.app-sidebar:focus-within .app-sidebar__panel {
+  opacity: 1;
+}
+
+.app-sidebar__panel-frame {
+  position: absolute;
+  inset: 1.17% 2.84% 1.07% 25.84%;
+  border-radius: 10px 20px 20px 10px;
+  border: 1px solid var(--sidebar-panel-border);
+  overflow: hidden;
+  background: var(--sidebar-panel-bg);
+  box-shadow: inset 0 0 7px 2px var(--sidebar-panel-shadow);
+}
+
+.app-sidebar__panel-surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .app-sidebar__panel {
+    transition: none;
+  }
+}
+
+@media (max-width: 860px) {
+  body.has-sidebar {
+    padding-left: 84px;
+  }
+
+  .app-sidebar {
+    width: 84px;
+  }
+
+  .app-sidebar:hover,
+  .app-sidebar:focus-within {
+    width: 84px;
+  }
+
+  .app-sidebar__rail {
+    width: 84px;
+  }
+
+  .app-sidebar__panel {
+    display: none;
+  }
+
+  .app-sidebar__item--active {
+    left: 20px;
+  }
+
+  .app-sidebar__item--home,
+  .app-sidebar__item--apps,
+  .app-sidebar__item--settings,
+  .app-sidebar__item--profile {
+    left: 30px;
+  }
+}
