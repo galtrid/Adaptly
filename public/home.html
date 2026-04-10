@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adapty</title>
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="has-sidebar">
+
+<div class="layout">
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Top -->
+    <div class="topbar">
+      <span id="welcomeName"></span>
+    </div>
+
+    <!-- Input -->
+    <form id="generateForm" class="form">
+      <input id="skillInput" placeholder="Enter a skill..." required>
+      <button id="generateBtn">Generate</button>
+    </form>
+
+    <div id="generateStatus"></div>
+
+    <!-- My Roadmaps -->
+    <div class="card">
+      <h2>My Roadmaps</h2>
+      <div id="roadmapsList"></div>
+    </div>
+
+    <!-- Roadmap -->
+    <div id="roadmapSection" class="card" style="display:none;">
+      <h2 id="roadmapTitle">Roadmap</h2>
+      <div id="roadmapCanvas"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="sidebar.js"></script>
+<script src="home.js"></script>
+</body>
+</html>

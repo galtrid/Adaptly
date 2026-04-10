@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Adapty</title>
+  <link rel="stylesheet" href="sidebar.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page-bg: #e8ace0;
+      --sidebar-bg: #ffdffb;
+      --selected-bg: rgba(59, 10, 29, 0.15);
+      --primary: #3b0a1d;
+      --card-bg: #f8f8f8;
+      --card-shadow: 0 8px 32px -6px rgba(0, 0, 0, 0.25);
+      --muted: rgba(0, 0, 0, 0.29);
+      --field-border: rgba(177, 153, 174, 0.47);
+      --button-bg: #ffdffb;
+      --button-border: #ffcff9;
+      --button-shadow: 0 4px 11px -2px rgba(255, 192, 247, 0.48);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      min-height: 100vh;
+      background: var(--page-bg);
+      color: #000;
+    }
+
+    .login-page {
+      min-height: 100vh;
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px;
+    }
+
+    .side-rail {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 100px;
+      background: var(--sidebar-bg);
+      border-top-right-radius: 20px;
+      border-bottom-right-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 30px 0 20px;
+      z-index: 2;
+    }
+
+    .rail-top,
+    .rail-mid,
+    .rail-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .logo-chip {
+      width: 40px;
+      height: 39px;
+      border-radius: 10px;
+      background: var(--primary);
+      display: grid;
+      place-items: center;
+      color: #fff;
+    }
+
+    .logo-chip svg,
+    .rail-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 1.8;
+      fill: none;
+      stroke: currentColor;
+    }
+
+    .rail-icon {
+      width: 24px;
+      height: 24px;
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+    }
+
+    .rail-icon.is-selected {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: var(--selected-bg);
+    }
+
+    .login-card {
+      width: min(521px, 100%);
+      min-height: 710px;
+      background: var(--card-bg);
+      border-radius: 30px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 54px 50px 54px;
+    }
+
+    .login-title {
+      font-size: clamp(34px, 3.4vw, 40px);
+      font-weight: 800;
+      line-height: 1.1;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .login-subtitle {
+      margin-top: 34px;
+      font-size: 24px;
+      line-height: 1.25;
+      text-align: center;
+      max-width: 360px;
+      font-weight: 400;
+    }
+
+    .login-form {
+      margin-top: 72px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 17px;
+    }
+
+    .login-input {
+      height: 61px;
+      border-radius: 7px;
+      border: 1px solid var(--field-border);
+      background: transparent;
+      padding: 0 22px;
+      font-size: 20px;
+      color: #000;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .login-input::placeholder {
+      color: var(--muted);
+    }
+
+    .login-input:focus {
+      border-color: rgba(59, 10, 29, 0.35);
+      box-shadow: 0 0 0 3px rgba(59, 10, 29, 0.08);
+    }
+
+    .login-status {
+      min-height: 22px;
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+      color: #8d203d;
+    }
+
+    .login-button {
+      margin-top: 36px;
+      height: 61px;
+      border: 1px solid var(--button-border);
+      border-radius: 7px;
+      background: var(--button-bg);
+      box-shadow: var(--button-shadow);
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+
+    .login-button:hover:enabled {
+      filter: brightness(0.985);
+      box-shadow: 0 6px 15px -2px rgba(255, 192, 247, 0.62);
+      transform: translateY(-1px);
+    }
+
+    .login-button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .login-footer {
+      margin-top: auto;
+      margin-bottom: 2px;
+      font-size: 13px;
+      text-align: center;
+      color: #000;
+    }
+
+    .login-footer a {
+      font-weight: 700;
+      color: #000;
+      text-decoration: none;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      clip: rect(0, 0, 0, 0);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      .side-rail {
+        position: static;
+        width: calc(100% - 32px);
+        max-width: 520px;
+        height: 76px;
+        border-radius: 18px;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 14px 20px;
+        margin-bottom: 20px;
+      }
+
+      .rail-top,
+      .rail-mid,
+      .rail-bottom {
+        flex-direction: row;
+        gap: 12px;
+      }
+
+      .rail-mid .rail-icon:not(.is-selected),
+      .rail-bottom .rail-icon:first-child {
+        display: none;
+      }
+
+      .login-page {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+      }
+
+      .login-card {
+        min-height: auto;
+        padding: 46px 24px 30px;
+      }
+
+      .login-title {
+        font-size: 36px;
+      }
+
+      .login-subtitle {
+        margin-top: 22px;
+        font-size: 21px;
+      }
+
+      .login-form {
+        margin-top: 36px;
+      }
+
+      .login-input,
+      .login-button {
+        height: 54px;
+        font-size: 18px;
+      }
+
+      .login-button {
+        margin-top: 24px;
+      }
+
+      .login-footer {
+        margin-top: 26px;
+      }
+    }
+  </style>
+</head>
+<body class="has-sidebar">
+  <main class="login-page" data-node-id="1:47">
+    <section class="login-card" aria-label="Sign in panel" data-node-id="1:6">
+      <h1 class="login-title" data-node-id="1:8">Welcome</h1>
+      <p class="login-subtitle" data-node-id="1:11">Enter your details below to sign in to your account</p>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <label class="sr-only" for="loginEmail">Email</label>
+        <input
+          id="loginEmail"
+          class="login-input"
+          type="email"
+          placeholder="Email"
+          autocomplete="email"
+          required
+          data-node-id="1:9"
+        />
+
+        <label class="sr-only" for="loginPassword">Password</label>
+        <input
+          id="loginPassword"
+          class="login-input"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+          data-node-id="1:10"
+        />
+
+        <div id="loginStatus" class="login-status" role="alert" aria-live="polite"></div>
+
+        <button id="loginBtn" type="submit" class="login-button" data-node-id="1:3">Sign in</button>
+      </form>
+
+      <p class="login-footer" data-node-id="1:12">
+        Don't have an account?
+        <a href="register.html">Sign up.</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="sidebar.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>
