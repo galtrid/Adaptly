@@ -28,24 +28,29 @@ async function loadRoadmaps() {
         const data = await apiFetch("/roadmap/user");
         const list = document.getElementById("roadmapsList");
         if (!list) return;
+        if (!data.roadmaps.length) { list.innerHTML = `<p class="sidebar-roadmaps__empty">No roadmaps yet</p>`; return; }
 
-        if (!data.roadmaps.length) {
-            list.innerHTML = `<p class="sidebar-roadmaps__empty">No roadmaps yet</p>`;
-            return;
-        }
-
-        list.innerHTML = data.roadmaps.map(roadmap =>
-            `<div class="sidebar-roadmap-item" data-id="${roadmap.id}" data-title="${roadmap.title.replace(/"/g, '&quot;')}">${roadmap.title}</div>`
+        list.innerHTML = data.roadmaps.map(r =>
+            `<div class="sidebar-roadmap-item" data-id="${r.id}" data-title="${r.title.replace(/"/g, '&quot;')}">
+                <span>${r.title}</span>
+                <button class="rm-delete-btn" title="Delete">🗑</button>
+            </div>`
         ).join("");
 
         list.querySelectorAll(".sidebar-roadmap-item").forEach(el => {
-            el.addEventListener("click", () => {
-                loadRoadmap(Number(el.dataset.id), el.dataset.title);
-            });
+            el.querySelector("span").addEventListener("click", () => loadRoadmap(+el.dataset.id, el.dataset.title));
+            el.querySelector(".rm-delete-btn").addEventListener("click", e => { e.stopPropagation(); deleteRoadmap(+el.dataset.id); });
         });
     } catch (err) {
         console.error("Failed to load roadmaps:", err);
     }
+}
+
+async function deleteRoadmap(id) {
+    if (!confirm("Delete this roadmap?")) return;
+    await apiFetch(`/roadmap/${id}`, "DELETE");
+    document.getElementById("roadmapSection").style.display = "none";
+    loadRoadmaps();
 }
 
 async function loadRoadmap(id, title) {
@@ -103,26 +108,140 @@ document.getElementById("generateForm").addEventListener("submit", async (e) => 
     }
 });
 
+// Group flat items into phases (indent 0 = phase header)
+function groupIntoPhases(items) {
+    const phases = [];
+    let current = null;
+    for (const item of items) {
+        if (item.indent_level === 0) {
+            current = { ...item, children: [] };
+            phases.push(current);
+        } else if (current) {
+            current.children.push(item);
+        }
+    }
+    return phases;
+}
+
+// completed → current → locked (strictly sequential)
+function getPhaseStates(phases) {
+    let foundCurrent = false;
+    return phases.map(phase => {
+        const allDone = phase.children.length > 0 && phase.children.every(c => c.completed);
+        if (foundCurrent)      return "locked";
+        if (allDone)           return "completed";
+        foundCurrent = true;   return "current";
+    });
+}
+
 function renderRoadmap(roadmap) {
     const canvas = document.getElementById("roadmapCanvas");
     document.getElementById("roadmapTitle").textContent = roadmap.title || "Roadmap";
 
-    canvas.innerHTML = roadmap.items.map(item => {
-        if (item.indent_level === 0) {
-            return `<div class="rm-heading">${item.text}</div>`;
-        }
-        const checked = item.completed ? "checked" : "";
-        const padding = item.indent_level === 2 ? "padding-left:28px" : "";
-        return `<label class="rm-item ${checked ? "rm-done" : ""}" style="${padding}">
-            <input type="checkbox" data-id="${item.id}" ${checked}> ${item.text}
-        </label>`;
-    }).join("");
+    const phases = groupIntoPhases(roadmap.items);
+    const states = getPhaseStates(phases);
+    const icons  = { completed: "✅", current: "⭐", locked: "🔒" };
+    const sides  = ["node-left", "node-right"];
 
+    canvas.innerHTML = `<div class="roadmap-path">${phases.map((phase, i) => {
+        const state = states[i];
+        const tasks = phase.children.map(t => `
+            <label class="task-item ${t.completed ? "task-item--done" : ""} ${t.indent_level === 2 ? "task-item--sub" : ""}">
+                <input type="checkbox" data-id="${t.id}" ${t.completed ? "checked" : ""} ${state === "locked" ? "disabled" : ""}>
+                <span>${t.text}</span>
+            </label>`).join("");
+
+        return `
+            ${i > 0 ? `<div class="path-line ${states[i-1] === "completed" ? "path-line--done" : ""}"></div>` : ""}
+            <div class="path-node path-node--${state} ${sides[i % 2]}" data-index="${i}">
+                <div class="path-node__bubble">
+                    <div class="path-node__icon">${icons[state]}</div>
+                    <div class="path-node__title">${phase.text}</div>
+                    ${phase.children.length ? '<div class="path-node__chevron">▾</div>' : ""}
+                </div>
+                ${phase.children.length ? `<div class="path-node__tasks" style="display:none">${tasks}</div>` : ""}
+            </div>`;
+    }).join("")}</div>`;
+
+    // Expand / collapse on click
+    canvas.querySelectorAll(".path-node__bubble").forEach(bubble => {
+        bubble.addEventListener("click", () => {
+            const node = bubble.closest(".path-node");
+            if (node.classList.contains("path-node--locked")) return;
+            const panel = node.querySelector(".path-node__tasks");
+            if (!panel) return;
+            const open = panel.style.display !== "none";
+            panel.style.display = open ? "none" : "block";
+            bubble.classList.toggle("is-open", !open);
+        });
+    });
+
+    // Checkbox changes → save + refresh states
     canvas.querySelectorAll("input[type=checkbox]").forEach(cb => {
         cb.addEventListener("change", () => {
             apiFetch(`/roadmap/items/${cb.dataset.id}/complete`, "PATCH", { completed: cb.checked });
-            cb.closest("label").classList.toggle("rm-done", cb.checked);
+            cb.closest("label").classList.toggle("task-item--done", cb.checked);
+            refreshPhaseStates();
         });
+    });
+
+    // Auto-open the current phase
+    const current = canvas.querySelector(".path-node--current");
+    if (current) {
+        const panel = current.querySelector(".path-node__tasks");
+        if (panel) { panel.style.display = "block"; current.querySelector(".path-node__bubble").classList.add("is-open"); }
+    }
+
+    // Inline editing — double-click any task text to edit
+    canvas.addEventListener("dblclick", e => {
+        const span = e.target.closest(".task-item span");
+        if (!span || span.querySelector) return; // already an input
+        const cb = span.closest("label").querySelector("input[type=checkbox]");
+        const inp = document.createElement("input");
+        inp.value = span.textContent;
+        inp.className = "task-edit-input";
+        span.replaceWith(inp);
+        inp.focus();
+        inp.select();
+        const save = () => {
+            const text = inp.value.trim() || span.textContent;
+            if (text !== span.textContent) apiFetch(`/roadmap/items/${cb.dataset.id}/text`, "PATCH", { text });
+            const s = document.createElement("span");
+            s.textContent = text;
+            inp.replaceWith(s);
+        };
+        inp.addEventListener("blur", save, { once: true });
+        inp.addEventListener("keydown", e => e.key === "Enter" && inp.blur());
+    });
+}
+
+function refreshPhaseStates() {
+    const nodes = [...document.querySelectorAll(".path-node")];
+    const icons = { completed: "✅", current: "⭐", locked: "🔒" };
+    let foundCurrent = false;
+
+    nodes.forEach((node) => {
+        const boxes = [...node.querySelectorAll("input[type=checkbox]")];
+        const allDone = boxes.length > 0 && boxes.every(cb => cb.checked);
+        const state = foundCurrent ? "locked" : allDone ? "completed" : (foundCurrent = true, "current");
+
+        node.classList.remove("path-node--completed", "path-node--current", "path-node--locked");
+        node.classList.add(`path-node--${state}`);
+        const icon = node.querySelector(".path-node__icon");
+        if (icon) icon.textContent = icons[state];
+        boxes.forEach(cb => cb.disabled = state === "locked");
+
+        // Close locked nodes
+        if (state === "locked") {
+            const panel = node.querySelector(".path-node__tasks");
+            const bubble = node.querySelector(".path-node__bubble");
+            if (panel) panel.style.display = "none";
+            if (bubble) bubble.classList.remove("is-open");
+        }
+    });
+
+    document.querySelectorAll(".path-line").forEach((line, i) => {
+        line.classList.toggle("path-line--done", nodes[i]?.classList.contains("path-node--completed"));
     });
 }
 

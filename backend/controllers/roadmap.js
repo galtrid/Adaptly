@@ -34,25 +34,19 @@ indent 0 = main topic, indent 1 = subtopic, indent 2 = learning material/resourc
         );
         const roadmapId = result.insertId;
 
-        // Save each step of the roadmap
+        // Save each step and collect real DB IDs
+        const savedItems = [];
         for (let i = 0; i < items.length; i++) {
-            await db.query(
+            const [row] = await db.query(
                 "INSERT INTO roadmap_items (roadmap_id, sort_order, text, indent_level) VALUES (?, ?, ?, ?)",
                 [roadmapId, i, items[i].text, items[i].indent]
             );
+            savedItems.push({ id: row.insertId, text: items[i].text, indent_level: items[i].indent, completed: false });
         }
 
         res.json({
             success: true,
-            roadmap: {
-                id: roadmapId,
-                title: skill + " Roadmap",
-                items: items.map((item, i) => ({
-                    id: i,
-                    text: item.text,
-                    indent_level: item.indent
-                }))
-            }
+            roadmap: { id: roadmapId, title: skill + " Roadmap", items: savedItems }
         });
 
     } catch (err) {
@@ -79,6 +73,21 @@ async function getRoadmapItems(req, res) {
     res.json({ items });
 }
 
+// Delete a roadmap and all its items
+async function deleteRoadmap(req, res) {
+    await db.query("DELETE FROM roadmap_items WHERE roadmap_id = ?", [req.params.id]);
+    await db.query("DELETE FROM roadmaps WHERE id = ? AND user_id = ?", [req.params.id, req.user.id]);
+    res.json({ success: true });
+}
+
+// Edit the text of a roadmap item
+async function updateItemText(req, res) {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: "Text required" });
+    await db.query("UPDATE roadmap_items SET text = ? WHERE id = ?", [text, req.params.id]);
+    res.json({ success: true });
+}
+
 // Save checkbox state when a user checks/unchecks a step
 async function updateComplete(req, res) {
     const { completed } = req.body;
@@ -91,13 +100,19 @@ async function updateComplete(req, res) {
 
 // Helper: pull JSON array out of the AI response
 function extractJSON(text) {
+    const clean = str => str.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+
     try {
         return JSON.parse(text);
     } catch {
         const match = text.match(/\[[\s\S]*\]/);
         if (!match) throw new Error("AI did not return JSON");
-        return JSON.parse(match[0]);
+        try {
+            return JSON.parse(match[0]);
+        } catch {
+            return JSON.parse(clean(match[0]));
+        }
     }
 }
 
-module.exports = { generate, getUserRoadmaps, getRoadmapItems, updateComplete };
+module.exports = { generate, getUserRoadmaps, getRoadmapItems, updateComplete, deleteRoadmap, updateItemText };

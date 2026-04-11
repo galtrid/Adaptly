@@ -11,9 +11,11 @@ function requireAuth(req, res, next) {
     next();
 }
 
-router.post("/generate",          requireAuth, controller.generate);
-router.get("/user",               requireAuth, controller.getUserRoadmaps);
-router.get("/:id/items",          requireAuth, controller.getRoadmapItems);
-router.patch("/items/:id/complete", requireAuth, controller.updateComplete);
+router.post("/generate",             requireAuth, controller.generate);
+router.get("/user",                  requireAuth, controller.getUserRoadmaps);
+router.get("/:id/items",             requireAuth, controller.getRoadmapItems);
+router.delete("/:id",                requireAuth, controller.deleteRoadmap);
+router.patch("/items/:id/complete",  requireAuth, controller.updateComplete);
+router.patch("/items/:id/text",      requireAuth, controller.updateItemText);
 
 module.exports = router;

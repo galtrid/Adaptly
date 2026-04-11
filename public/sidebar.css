@@ -237,21 +237,43 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
 }
 
 .sidebar-roadmap-item {
-  padding: 8px 10px;
+  padding: 6px 10px;
   border-radius: 8px;
   font-size: 13px;
   color: var(--sidebar-primary);
   cursor: pointer;
   transition: background 0.15s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.sidebar-roadmap-item:hover {
-  background: var(--sidebar-selected);
+.sidebar-roadmap-item:hover { background: var(--sidebar-selected); }
+
+.sidebar-roadmap-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.rm-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: opacity 0.15s, background 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+  color: var(--sidebar-primary);
+}
+
+.sidebar-roadmap-item:hover .rm-delete-btn { opacity: 0.6; }
+.rm-delete-btn:hover { opacity: 1 !important; background: rgba(220,38,38,0.12); }
 
 .sidebar-roadmaps__empty {
   font-size: 12px;
