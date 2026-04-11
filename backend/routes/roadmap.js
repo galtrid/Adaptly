@@ -3,28 +3,26 @@ const router = express.Router();
 const db = require("../database");
 const askAI = require("../services/openai");
 
-// auth middleware
+// Check if the user is logged in before allowing access
 function requireAuth(req, res, next) {
-    if (!req.session.user)
+    if (!req.session.user) {
         return res.status(401).json({ error: "Not logged in" });
-
+    }
     req.user = req.session.user;
     next();
 }
 
-// helper
-function q(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.query(sql, params, (err, res) => err ? reject(err) : resolve(res));
-    });
-}
-
+// Generate a new roadmap using AI
 router.post("/generate", requireAuth, async (req, res) => {
     const { skill } = req.body;
-    if (!skill) return res.status(400).json({ error: "Skill required" });
+
+    if (!skill) {
+        return res.status(400).json({ error: "Skill required" });
+    }
 
     try {
-        const aiText = await askAI(
+        // Ask the AI to generate a roadmap
+        const aiResponse = await askAI(
             `Create a learning roadmap for ${skill}.
 Return ONLY a JSON array of objects like:
 [
@@ -33,32 +31,27 @@ Return ONLY a JSON array of objects like:
 ]`
         );
 
-        console.log("=== AI RAW RESPONSE ===");
-        console.log(aiText);
-        console.log("=======================");
-
-        // 🔥 USE SAFE PARSER (NOT JSON.parse directly)
-        const items = extractJSON(aiText);
+        const items = extractJSON(aiResponse);
 
         if (!Array.isArray(items)) {
-            throw new Error("AI did not return array");
+            throw new Error("AI did not return an array");
         }
 
-        const result = await q(
+        // Save the roadmap to the database
+        const [result] = await db.query(
             "INSERT INTO roadmaps (user_id, title) VALUES (?, ?)",
             [req.user.id, skill + " Roadmap"]
         );
-
         const roadmapId = result.insertId;
 
+        // Save each step of the roadmap
         for (let i = 0; i < items.length; i++) {
-            await q(
+            await db.query(
                 "INSERT INTO roadmap_items (roadmap_id, sort_order, text, indent_level) VALUES (?, ?, ?, ?)",
                 [roadmapId, i, items[i].text, items[i].indent]
             );
         }
 
-        // 🔥 RETURN ITEMS (your frontend expects it)
         res.json({
             success: true,
             roadmap: {
@@ -73,51 +66,47 @@ Return ONLY a JSON array of objects like:
         });
 
     } catch (err) {
-        console.error("ROADMAP ERROR:", err.message);
+        console.error("Roadmap error:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
-// get user roadmaps
+// Get all roadmaps for the logged-in user
 router.get("/user", requireAuth, async (req, res) => {
-    const rows = await q("SELECT * FROM roadmaps WHERE user_id = ?", [req.user.id]);
+    const [rows] = await db.query(
+        "SELECT * FROM roadmaps WHERE user_id = ?",
+        [req.user.id]
+    );
     res.json({ roadmaps: rows });
 });
 
-// get items
+// Get all steps inside a roadmap
 router.get("/:id/items", requireAuth, async (req, res) => {
-    const items = await q(
+    const [items] = await db.query(
         "SELECT * FROM roadmap_items WHERE roadmap_id = ? ORDER BY sort_order",
         [req.params.id]
     );
     res.json({ items });
 });
 
-// update checkbox
+// Save checkbox state when a user checks/unchecks a step
 router.patch("/items/:id/complete", requireAuth, async (req, res) => {
     const { completed } = req.body;
-    await q("UPDATE roadmap_items SET completed = ? WHERE id = ?", [completed ? 1 : 0, req.params.id]);
+    await db.query(
+        "UPDATE roadmap_items SET completed = ? WHERE id = ?",
+        [completed ? 1 : 0, req.params.id]
+    );
     res.json({ success: true });
 });
 
+// Helper: pull JSON array out of the AI response
 function extractJSON(text) {
     try {
         return JSON.parse(text);
     } catch {
-        // try extract array []
         const match = text.match(/\[[\s\S]*\]/);
-
-        if (!match) {
-            console.error("BAD AI RESPONSE:", text);
-            throw new Error("AI did not return JSON array");
-        }
-
-        try {
-            return JSON.parse(match[0]);
-        } catch {
-            console.error("STILL BAD JSON:", text);
-            throw new Error("Invalid JSON format");
-        }
+        if (!match) throw new Error("AI did not return JSON");
+        return JSON.parse(match[0]);
     }
 }
 

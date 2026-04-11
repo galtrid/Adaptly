@@ -3,45 +3,59 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const db = require("./database");
 
-// signup
+// Sign up a new user
 router.post("/signup", async (req, res) => {
     const { username, email, password } = req.body;
 
-    if (!username || !email || !password)
+    if (!username || !email || !password) {
         return res.status(400).json({ error: "All fields required" });
+    }
 
-    const hash = await bcrypt.hash(password, 10);
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.query(
-        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-        [username, email, hash],
-        (err) => {
-            if (err) return res.status(500).json({ error: "User exists" });
-            res.json({ message: "Signup success" });
-        }
-    );
+        await db.query(
+            "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+            [username, email, hashedPassword]
+        );
+
+        res.json({ message: "Signup success" });
+    } catch (err) {
+        res.status(500).json({ error: "Username or email already exists" });
+    }
 });
 
-// login
-router.post("/login", (req, res) => {
+// Log in an existing user
+router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
-    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
-        if (err) return res.status(500).json({ error: "DB error" });
-        if (!result.length) return res.status(400).json({ error: "User not found" });
+    try {
+        // Find the user by email
+        const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
 
-        const user = result[0];
-        const match = await bcrypt.compare(password, user.password);
+        if (rows.length === 0) {
+            return res.status(400).json({ error: "User not found" });
+        }
 
-        if (!match) return res.status(400).json({ error: "Wrong password" });
+        const user = rows[0];
 
+        // Check if the password is correct
+        const passwordMatches = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatches) {
+            return res.status(400).json({ error: "Wrong password" });
+        }
+
+        // Save the user in the session so they stay logged in
         req.session.user = { id: user.id, username: user.username };
 
         res.json({ message: "Login success", username: user.username });
-    });
+    } catch (err) {
+        res.status(500).json({ error: "Something went wrong" });
+    }
 });
 
-// logout
+// Log out
 router.post("/logout", (req, res) => {
     req.session.destroy(() => {
         res.json({ message: "Logged out" });
