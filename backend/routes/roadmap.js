@@ -23,12 +23,14 @@ router.post("/generate", requireAuth, async (req, res) => {
     try {
         // Ask the AI to generate a roadmap
         const aiResponse = await askAI(
-            `Create a learning roadmap for ${skill}.
+            `Create a detailed learning roadmap for ${skill}.
 Return ONLY a JSON array of objects like:
 [
   { "text": "Phase 1: Basics", "indent": 0 },
-  { "text": "Learn X", "indent": 1 }
-]`
+  { "text": "Variables & Data Types", "indent": 1 },
+  { "text": "Read: JavaScript.info chapter 1", "indent": 2 }
+]
+indent 0 = main topic, indent 1 = subtopic, indent 2 = learning material/resource`
         );
 
         const items = extractJSON(aiResponse);

@@ -213,6 +213,48 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
   border-radius: inherit;
 }
 
+/* Roadmaps list inside sidebar panel */
+.sidebar-roadmaps {
+  padding: 20px 14px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.sidebar-roadmaps__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sidebar-primary);
+  opacity: 0.55;
+  margin-bottom: 10px;
+  padding: 0 6px;
+}
+
+.sidebar-roadmap-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--sidebar-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.sidebar-roadmap-item:hover {
+  background: var(--sidebar-selected);
+}
+
+.sidebar-roadmaps__empty {
+  font-size: 12px;
+  color: var(--sidebar-primary);
+  opacity: 0.4;
+  padding: 4px 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .app-sidebar,
   .app-sidebar__panel {

@@ -12,13 +12,27 @@ function loadUser() {
     document.getElementById("welcomeName").textContent = username;
 }
 
+function setupSidebarRoadmaps() {
+    const surface = document.querySelector(".app-sidebar__panel-surface");
+    if (!surface) return;
+    surface.innerHTML = `
+        <div class="sidebar-roadmaps">
+            <p class="sidebar-roadmaps__title">My Roadmaps</p>
+            <div id="roadmapsList"></div>
+        </div>
+    `;
+}
+
 async function loadRoadmaps() {
     try {
         const data = await apiFetch("/roadmap/user");
         const list = document.getElementById("roadmapsList");
-        list.innerHTML = data.roadmaps.map(roadmap => 
-            `<div class="roadmap-item" data-id="${roadmap.id}" onclick="loadRoadmap(${roadmap.id}, '${roadmap.title}')">${roadmap.title}</div>`
-        ).join("");
+        if (!list) return;
+        list.innerHTML = data.roadmaps.length
+            ? data.roadmaps.map(roadmap =>
+                `<div class="sidebar-roadmap-item" onclick="loadRoadmap(${roadmap.id}, '${roadmap.title}')">${roadmap.title}</div>`
+              ).join("")
+            : `<p class="sidebar-roadmaps__empty">No roadmaps yet</p>`;
     } catch (err) {
         console.error("Failed to load roadmaps:", err);
     }
@@ -88,7 +102,8 @@ function renderRoadmap(roadmap) {
             return `<div class="rm-heading">${item.text}</div>`;
         }
         const checked = item.completed ? "checked" : "";
-        return `<label class="rm-item ${checked ? "rm-done" : ""}">
+        const padding = item.indent_level === 2 ? "padding-left:28px" : "";
+        return `<label class="rm-item ${checked ? "rm-done" : ""}" style="${padding}">
             <input type="checkbox" data-id="${item.id}" ${checked}> ${item.text}
         </label>`;
     }).join("");
@@ -110,5 +125,6 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 (async () => {
     await checkAuth();
     loadUser();
+    setupSidebarRoadmaps();
     loadRoadmaps();
 })();
