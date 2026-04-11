@@ -43,8 +43,9 @@ loginForm.addEventListener("submit", async (e) => {
       return showError(data.error || "Login failed");
     }
 
-    // ✅ store ONLY username (no JWT anymore)
-    localStorage.setItem("username", data.username);
+    // ✅ store username and email (no JWT anymore)
+    localStorage.setItem("username", data.username || email);
+    localStorage.setItem("email", email);
 
     showSuccess("Login successful!");
 

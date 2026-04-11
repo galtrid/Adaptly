@@ -28,7 +28,7 @@ async function loadRoadmaps() {
         const data = await apiFetch("/roadmap/user");
         const list = document.getElementById("roadmapsList");
         if (!list) return;
-        if (!data.roadmaps.length) { list.innerHTML = `<p class="sidebar-roadmaps__empty">No roadmaps yet</p>`; return; }
+        if (!data.roadmaps.length) { list.innerHTML = `<p class="sidebar-roadmaps__empty" style="margin-top: 10px; color: #676767; font-family: 'Inter', sans-serif; font-size: 14px;">No Roadmaps available</p>`; return; }
 
         list.innerHTML = data.roadmaps.map(r =>
             `<div class="sidebar-roadmap-item" data-id="${r.id}" data-title="${r.title.replace(/"/g, '&quot;')}">
@@ -245,11 +245,7 @@ function refreshPhaseStates() {
     });
 }
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await fetch("/auth/logout", { method: "POST", credentials: "include" });
-    localStorage.removeItem("username");
-    window.location.href = "login.html";
-});
+// Removed duplicate logoutBtn listener (handled in sidebar.js)
 
 (async () => {
     await checkAuth();

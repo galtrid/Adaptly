@@ -82,6 +82,33 @@
     sidebar.className = "app-sidebar";
     sidebar.setAttribute("aria-label", "Primary navigation");
 
+    const username = localStorage.getItem("username");
+    const email = localStorage.getItem("email");
+    const isLoggedIn = !!username;
+
+    const roadmapsContent = isLoggedIn 
+      ? `` 
+      : `<div style="height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: #676767; font-family: 'Inter', sans-serif; font-size: 14px;">Log in to display Roadmaps</div>`;
+    
+    const profileContent = isLoggedIn
+      ? `
+        <div style="position: absolute; bottom: 33px; left: 23px; display: flex; flex-direction: column; gap: 24px;">
+           <div>
+             <p id="sidebarProfileUsername" style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 20px; color: var(--sidebar-icon); margin: 0; line-height: normal;">${username}</p>
+             <p id="sidebarProfileEmail" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 14px; color: #676767; margin: 0; line-height: normal; margin-top: 4px;">${email || ""}</p>
+           </div>
+           <button id="logoutBtn" style="display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; color: #e11d48; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; line-height: normal;">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+               <polyline points="16 17 21 12 16 7"></polyline>
+               <line x1="21" y1="12" x2="9" y2="12"></line>
+             </svg>
+             Log out
+           </button>
+        </div>
+      `
+      : `<div style="height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: #676767; font-family: 'Inter', sans-serif; font-size: 14px;">Log in to display Profile</div>`;
+
     sidebar.innerHTML = `
       <div class="app-sidebar__rail">
         <button class="app-sidebar__brand" type="button" aria-label="Ureeka home">
@@ -106,22 +133,9 @@
       <div class="app-sidebar__panel" aria-hidden="true">
         <div class="app-sidebar__panel-frame">
           <div class="app-sidebar__panel-surface">
-            <div id="sidebarContentRoadmaps" style="display: none; height: 100%;"></div>
+            <div id="sidebarContentRoadmaps" style="display: none; height: 100%;">${roadmapsContent}</div>
             <div id="sidebarContentProfile" style="display: none; height: 100%; position: relative;">
-               <div style="position: absolute; bottom: 33px; left: 23px; display: flex; flex-direction: column; gap: 24px;">
-                  <div>
-                    <p id="sidebarProfileUsername" style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 20px; color: var(--sidebar-icon); margin: 0; line-height: normal;">Username</p>
-                    <p id="sidebarProfileEmail" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 14px; color: #676767; margin: 0; line-height: normal; margin-top: 4px;">email@gmail.com</p>
-                  </div>
-                  <button id="logoutBtn" style="display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; color: #e11d48; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; line-height: normal;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    Log out
-                  </button>
-               </div>
+               ${profileContent}
             </div>
           </div>
         </div>
@@ -142,6 +156,16 @@
     const sidebarRoadmaps = document.getElementById("sidebarContentRoadmaps");
     const sidebarProfile = document.getElementById("sidebarContentProfile");
     const sidebarActiveBg = document.getElementById("sidebarActiveBg");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+          await fetch("/auth/logout", { method: "POST", credentials: "include" });
+          localStorage.removeItem("username");
+          localStorage.removeItem("email");
+          window.location.href = "login.html";
+      });
+    }
 
     let currentOpenPanel = null; // 'home' or 'profile' or null
 
@@ -180,12 +204,12 @@
         if (sidebarProfile) sidebarProfile.style.display = "block";
         
         // Populate profile info if available
-        const username = localStorage.getItem("username") || "Username";
-        const email = localStorage.getItem("email") || "email@gmail.com";
+        const currentUsername = localStorage.getItem("username");
+        const currentEmail = localStorage.getItem("email");
         const nameEl = document.getElementById("sidebarProfileUsername");
         const emailEl = document.getElementById("sidebarProfileEmail");
-        if(nameEl) nameEl.textContent = username;
-        if(emailEl) emailEl.textContent = email;
+        if(nameEl && currentUsername) nameEl.textContent = currentUsername;
+        if(emailEl && currentEmail) emailEl.textContent = currentEmail;
       }
     }
 

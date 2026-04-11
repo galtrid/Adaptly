@@ -33,8 +33,9 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        // store username only (NO JWT)
+        // store username and email
         localStorage.setItem("username", data.username || email);
+        localStorage.setItem("email", email);
 
         window.location.href = "home.html";
 
