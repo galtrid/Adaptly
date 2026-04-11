@@ -39,22 +39,13 @@
 
   function iconHome() {
     return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 10.5 12 3l9 7.5" />
-        <path d="M5.5 9.5V20h13V9.5" />
-      </svg>
+      <img src="src/house.svg" alt="Home" id="sidebarHomeImg" style="width: 24px; height: 24px;" aria-hidden="true" />
     `;
   }
 
   function iconApps() {
     return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="7" cy="7" r="2.5" />
-        <circle cx="17" cy="7" r="2.5" />
-        <circle cx="12" cy="17" r="2.5" />
-        <path d="M9.2 8.4l1.5 6" />
-        <path d="M14.8 8.4l-1.5 6" />
-      </svg>
+      <img src="src/skills.svg" alt="Apps" id="sidebarAppsImg" style="width: 24px; height: 24px;" aria-hidden="true" />
     `;
   }
 
@@ -109,7 +100,7 @@
     sidebar.innerHTML = `
       <div class="app-sidebar__rail">
         <button class="app-sidebar__brand" type="button" aria-label="Ureeka home">
-          <img src="alpha.png" alt="Adaptly logo" class="app-sidebar__brand-mark" id="sidebarBrandImg" />
+          <img src="src/alpha.png" alt="Adaptly logo" class="app-sidebar__brand-mark" id="sidebarBrandImg" />
         </button>
 
         <div class="app-sidebar__active-bg" aria-hidden="true"></div>
@@ -148,14 +139,20 @@
     const themeBtn = document.getElementById("themeToggleBtn");
     const themeIconContainer = themeBtn.querySelector(".theme-icon-container");
     const brandImg = document.getElementById("sidebarBrandImg");
+    const homeImg = document.getElementById("sidebarHomeImg");
+    const appsImg = document.getElementById("sidebarAppsImg");
 
     function updateThemeUI(theme) {
       if (theme === "dark") {
         themeIconContainer.innerHTML = iconThemeMoon();
-        brandImg.src = "alpha-dark.png";
+        brandImg.src = "src/alpha-dark.png";
+        if (homeImg) homeImg.src = "src/home_dark.svg";
+        if (appsImg) appsImg.src = "src/skills_dark.svg";
       } else {
         themeIconContainer.innerHTML = iconThemeSun();
-        brandImg.src = "alpha.png";
+        brandImg.src = "src/alpha.png";
+        if (homeImg) homeImg.src = "src/house.svg";
+        if (appsImg) appsImg.src = "src/skills.svg";
       }
     }
 

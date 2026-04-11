@@ -37,6 +37,23 @@ body[data-sidebar-theme="dark"] {
   --sidebar-brand-fg: #3b0a1d;
 }
 
+body.has-sidebar::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 25;
+  transition: opacity var(--sidebar-transition);
+}
+
+body.has-sidebar:has(.app-sidebar:hover)::after,
+body.has-sidebar:has(.app-sidebar:focus-within)::after {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .app-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -71,6 +88,7 @@ body[data-sidebar-theme="dark"] {
   color: var(--sidebar-icon);
   display: grid;
   place-items: center;
+  cursor: pointer;
 }
 
 .app-sidebar__brand {
@@ -96,6 +114,22 @@ body[data-sidebar-theme="dark"] {
   position: absolute;
   width: 24px;
   height: 24px;
+  border-radius: 10px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.app-sidebar__item::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 10px;
+  background: transparent;
+  transition: background-color 0.2s ease;
+  z-index: -1;
+}
+
+.app-sidebar__item:hover::before {
+  background: var(--sidebar-selected);
 }
 
 .app-sidebar__active-bg {

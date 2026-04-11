@@ -42,26 +42,26 @@ body {
 }
 
 .login-card {
-  width: min(521px, 100%);
-  min-height: 710px;
+  width: min(440px, 100%);
+  min-height: 580px;
   background: var(--card-bg);
-  border-radius: 30px;
+  border-radius: 24px;
   box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 42px 50px 43px;
+  padding: 36px 40px;
 }
 
 .login-icon {
-  width: 40px;
-  height: 39px;
-  margin-bottom: 18px;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
   object-fit: contain;
 }
 
 .login-title {
-  font-size: clamp(34px, 3.4vw, 40px);
+  font-size: clamp(28px, 3vw, 32px);
   font-weight: 800;
   line-height: 1.1;
   text-align: center;
@@ -69,30 +69,30 @@ body {
 }
 
 .login-subtitle {
-  margin-top: 14px;
-  font-size: 24px;
+  margin-top: 10px;
+  font-size: 18px;
   line-height: 1.25;
   text-align: center;
-  max-width: 360px;
+  max-width: 320px;
   font-weight: 400;
 }
 
 .login-form {
-  margin-top: 102px;
-  margin-bottom: 40px;
+  margin-top: 60px;
+  margin-bottom: 30px;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .login-input {
-  height: 61px;
+  height: 52px;
   border-radius: 7px;
   border: 1px solid var(--field-border);
   background: transparent;
-  padding: 0 22px;
-  font-size: 20px;
+  padding: 0 18px;
+  font-size: 16px;
   color: #000;
   outline: none;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
@@ -116,13 +116,13 @@ body {
 }
 
 .login-button {
-  margin-top: 36px;
-  height: 61px;
+  margin-top: 24px;
+  height: 52px;
   border: 1px solid var(--button-border);
   border-radius: 7px;
   background: var(--button-bg);
   box-shadow: var(--button-shadow);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #000;
   cursor: pointer;
@@ -168,16 +168,16 @@ body {
 
 /* Register page overrides */
 .register-card .login-subtitle {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .register-card .login-form {
-  margin-top: 52px;
-  margin-bottom: 30px;
+  margin-top: 36px;
+  margin-bottom: 24px;
 }
 
 .register-card .login-button {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 @media (max-width: 900px) {
