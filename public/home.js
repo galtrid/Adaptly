@@ -27,7 +27,7 @@ async function loadRoadmaps() {
 async function loadRoadmap(id, title) {
     try {
         const data = await apiFetch(`/roadmap/${id}/items`);
-        const roadmap = { id, title, items: data.items.map((item, i) => ({ id: item.id, text: item.text, indent_level: item.indent_level })) };
+        const roadmap = { id, title, items: data.items.map(item => ({ id: item.id, text: item.text, indent_level: item.indent_level, completed: item.completed })) };
         renderRoadmap(roadmap);
         document.getElementById("roadmapSection").style.display = "block";
     } catch (err) {
@@ -81,15 +81,13 @@ document.getElementById("generateForm").addEventListener("submit", async (e) => 
 
 function renderRoadmap(roadmap) {
     const canvas = document.getElementById("roadmapCanvas");
-    const saved = JSON.parse(localStorage.getItem("checked_" + roadmap.id) || "{}");
-
     document.getElementById("roadmapTitle").textContent = roadmap.title || "Roadmap";
 
-    canvas.innerHTML = roadmap.items.map((item, i) => {
+    canvas.innerHTML = roadmap.items.map(item => {
         if (item.indent_level === 0) {
             return `<div class="rm-heading">${item.text}</div>`;
         }
-        const checked = saved[item.id] ? "checked" : "";
+        const checked = item.completed ? "checked" : "";
         return `<label class="rm-item ${checked ? "rm-done" : ""}">
             <input type="checkbox" data-id="${item.id}" ${checked}> ${item.text}
         </label>`;
@@ -97,8 +95,7 @@ function renderRoadmap(roadmap) {
 
     canvas.querySelectorAll("input[type=checkbox]").forEach(cb => {
         cb.addEventListener("change", () => {
-            saved[cb.dataset.id] = cb.checked;
-            localStorage.setItem("checked_" + roadmap.id, JSON.stringify(saved));
+            apiFetch(`/roadmap/items/${cb.dataset.id}/complete`, "PATCH", { completed: cb.checked });
             cb.closest("label").classList.toggle("rm-done", cb.checked);
         });
     });
@@ -106,7 +103,7 @@ function renderRoadmap(roadmap) {
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
     await fetch("/auth/logout", { method: "POST", credentials: "include" });
-    localStorage.clear();
+    localStorage.removeItem("username");
     window.location.href = "login.html";
 });
 

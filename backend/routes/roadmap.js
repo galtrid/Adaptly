@@ -93,6 +93,13 @@ router.get("/:id/items", requireAuth, async (req, res) => {
     res.json({ items });
 });
 
+// update checkbox
+router.patch("/items/:id/complete", requireAuth, async (req, res) => {
+    const { completed } = req.body;
+    await q("UPDATE roadmap_items SET completed = ? WHERE id = ?", [completed ? 1 : 0, req.params.id]);
+    res.json({ success: true });
+});
+
 function extractJSON(text) {
     try {
         return JSON.parse(text);

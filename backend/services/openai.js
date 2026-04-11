@@ -10,7 +10,7 @@ async function askAI(prompt) {
         },
         body: JSON.stringify({
             model: MODEL,
-            temperature: 0.2, // 🔥 less randomness
+            temperature: 0.2,
             messages: [
                 {
                     role: "system",
