@@ -108,9 +108,19 @@
           <div class="app-sidebar__panel-surface">
             <div id="sidebarContentRoadmaps" style="display: none; height: 100%;"></div>
             <div id="sidebarContentProfile" style="display: none; height: 100%; position: relative;">
-               <div style="position: absolute; bottom: 33px; left: 23px;">
-                  <p id="sidebarProfileUsername" style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 20px; color: var(--sidebar-icon); margin: 0; line-height: normal;">Username</p>
-                  <p id="sidebarProfileEmail" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 14px; color: #676767; margin: 0; line-height: normal; margin-top: 4px;">email@gmail.com</p>
+               <div style="position: absolute; bottom: 33px; left: 23px; display: flex; flex-direction: column; gap: 24px;">
+                  <div>
+                    <p id="sidebarProfileUsername" style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 20px; color: var(--sidebar-icon); margin: 0; line-height: normal;">Username</p>
+                    <p id="sidebarProfileEmail" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 14px; color: #676767; margin: 0; line-height: normal; margin-top: 4px;">email@gmail.com</p>
+                  </div>
+                  <button id="logoutBtn" style="display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; color: #e11d48; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; line-height: normal;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Log out
+                  </button>
                </div>
             </div>
           </div>
