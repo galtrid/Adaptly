@@ -1,0 +1,103 @@
+const db = require("../database");
+const askAI = require("../services/openai");
+
+// Generate a new roadmap using AI
+async function generate(req, res) {
+    const { skill } = req.body;
+
+    if (!skill) {
+        return res.status(400).json({ error: "Skill required" });
+    }
+
+    try {
+        const aiResponse = await askAI(
+            `Create a detailed learning roadmap for ${skill}.
+Return ONLY a JSON array of objects like:
+[
+  { "text": "Phase 1: Basics", "indent": 0 },
+  { "text": "Variables & Data Types", "indent": 1 },
+  { "text": "Read: JavaScript.info chapter 1", "indent": 2 }
+]
+indent 0 = main topic, indent 1 = subtopic, indent 2 = learning material/resource`
+        );
+
+        const items = extractJSON(aiResponse);
+
+        if (!Array.isArray(items)) {
+            throw new Error("AI did not return an array");
+        }
+
+        // Save the roadmap to the database
+        const [result] = await db.query(
+            "INSERT INTO roadmaps (user_id, title) VALUES (?, ?)",
+            [req.user.id, skill + " Roadmap"]
+        );
+        const roadmapId = result.insertId;
+
+        // Save each step of the roadmap
+        for (let i = 0; i < items.length; i++) {
+            await db.query(
+                "INSERT INTO roadmap_items (roadmap_id, sort_order, text, indent_level) VALUES (?, ?, ?, ?)",
+                [roadmapId, i, items[i].text, items[i].indent]
+            );
+        }
+
+        res.json({
+            success: true,
+            roadmap: {
+                id: roadmapId,
+                title: skill + " Roadmap",
+                items: items.map((item, i) => ({
+                    id: i,
+                    text: item.text,
+                    indent_level: item.indent
+                }))
+            }
+        });
+
+    } catch (err) {
+        console.error("Roadmap error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+}
+
+// Get all roadmaps for the logged-in user
+async function getUserRoadmaps(req, res) {
+    const [rows] = await db.query(
+        "SELECT * FROM roadmaps WHERE user_id = ?",
+        [req.user.id]
+    );
+    res.json({ roadmaps: rows });
+}
+
+// Get all steps inside a roadmap
+async function getRoadmapItems(req, res) {
+    const [items] = await db.query(
+        "SELECT * FROM roadmap_items WHERE roadmap_id = ? ORDER BY sort_order",
+        [req.params.id]
+    );
+    res.json({ items });
+}
+
+// Save checkbox state when a user checks/unchecks a step
+async function updateComplete(req, res) {
+    const { completed } = req.body;
+    await db.query(
+        "UPDATE roadmap_items SET completed = ? WHERE id = ?",
+        [completed ? 1 : 0, req.params.id]
+    );
+    res.json({ success: true });
+}
+
+// Helper: pull JSON array out of the AI response
+function extractJSON(text) {
+    try {
+        return JSON.parse(text);
+    } catch {
+        const match = text.match(/\[[\s\S]*\]/);
+        if (!match) throw new Error("AI did not return JSON");
+        return JSON.parse(match[0]);
+    }
+}
+
+module.exports = { generate, getUserRoadmaps, getRoadmapItems, updateComplete };

@@ -195,6 +195,7 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
 .app-sidebar:hover .app-sidebar__panel,
 .app-sidebar:focus-within .app-sidebar__panel {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .app-sidebar__panel-frame {

@@ -28,11 +28,21 @@ async function loadRoadmaps() {
         const data = await apiFetch("/roadmap/user");
         const list = document.getElementById("roadmapsList");
         if (!list) return;
-        list.innerHTML = data.roadmaps.length
-            ? data.roadmaps.map(roadmap =>
-                `<div class="sidebar-roadmap-item" onclick="loadRoadmap(${roadmap.id}, '${roadmap.title}')">${roadmap.title}</div>`
-              ).join("")
-            : `<p class="sidebar-roadmaps__empty">No roadmaps yet</p>`;
+
+        if (!data.roadmaps.length) {
+            list.innerHTML = `<p class="sidebar-roadmaps__empty">No roadmaps yet</p>`;
+            return;
+        }
+
+        list.innerHTML = data.roadmaps.map(roadmap =>
+            `<div class="sidebar-roadmap-item" data-id="${roadmap.id}" data-title="${roadmap.title.replace(/"/g, '&quot;')}">${roadmap.title}</div>`
+        ).join("");
+
+        list.querySelectorAll(".sidebar-roadmap-item").forEach(el => {
+            el.addEventListener("click", () => {
+                loadRoadmap(Number(el.dataset.id), el.dataset.title);
+            });
+        });
     } catch (err) {
         console.error("Failed to load roadmaps:", err);
     }
