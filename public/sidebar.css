@@ -48,8 +48,7 @@ body.has-sidebar::after {
   transition: opacity var(--sidebar-transition);
 }
 
-body.has-sidebar:has(.app-sidebar:hover)::after,
-body.has-sidebar:has(.app-sidebar:focus-within)::after {
+body.has-sidebar:has(.app-sidebar.is-open)::after {
   opacity: 1;
   pointer-events: auto;
 }
@@ -67,8 +66,7 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
   will-change: width;
 }
 
-.app-sidebar:hover,
-.app-sidebar:focus-within {
+.app-sidebar.is-open {
   width: var(--sidebar-expanded-width);
 }
 
@@ -148,19 +146,9 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
   top: 128px;
 }
 
-.app-sidebar__item--apps {
-  left: 38px;
-  top: 183px;
-}
-
-.app-sidebar__item--settings {
-  left: 38px;
-  bottom: 85px;
-}
-
 .app-sidebar__item--theme {
   left: 38px;
-  bottom: 140px;
+  bottom: 85px;
 }
 
 .app-sidebar__item--profile {
@@ -192,13 +180,11 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
   transition: opacity 150ms ease;
 }
 
-.app-sidebar:hover .app-sidebar__panel,
-.app-sidebar:focus-within .app-sidebar__panel {
+.app-sidebar.is-open .app-sidebar__panel {
   opacity: 1;
 }
 
-.app-sidebar:hover .app-sidebar__panel-frame,
-.app-sidebar:focus-within .app-sidebar__panel-frame {
+.app-sidebar.is-open .app-sidebar__panel-frame {
   pointer-events: auto;
 }
 
@@ -298,8 +284,7 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
     width: 84px;
   }
 
-  .app-sidebar:hover,
-  .app-sidebar:focus-within {
+  .app-sidebar.is-open {
     width: 84px;
   }
 
@@ -316,8 +301,7 @@ body.has-sidebar:has(.app-sidebar:focus-within)::after {
   }
 
   .app-sidebar__item--home,
-  .app-sidebar__item--apps,
-  .app-sidebar__item--settings,
+  .app-sidebar__item--theme,
   .app-sidebar__item--profile {
     left: 30px;
   }

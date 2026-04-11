@@ -13,11 +13,11 @@ function loadUser() {
 }
 
 function setupSidebarRoadmaps() {
-    const surface = document.querySelector(".app-sidebar__panel-surface");
+    const surface = document.getElementById("sidebarContentRoadmaps");
     if (!surface) return;
     surface.innerHTML = `
         <div class="sidebar-roadmaps">
-            <p class="sidebar-roadmaps__title">My Roadmaps</p>
+            <p class="sidebar-roadmaps__title" style="margin-top: 0; padding-top: 10px;">My Roadmaps</p>
             <div id="roadmapsList"></div>
         </div>
     `;

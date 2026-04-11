@@ -43,21 +43,6 @@
     `;
   }
 
-  function iconApps() {
-    return `
-      <img src="src/skills.svg" alt="Apps" id="sidebarAppsImg" style="width: 24px; height: 24px;" aria-hidden="true" />
-    `;
-  }
-
-  function iconSettings() {
-    return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.86l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.86.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.8a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.86l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2.8a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.86-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.2.4.6.67 1 .6h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1 .4 1.7 1.7 0 0 0-.6 1Z" />
-      </svg>
-    `;
-  }
-
   function iconProfile() {
     return `
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -103,32 +88,32 @@
           <img src="src/alpha.png" alt="Adaptly logo" class="app-sidebar__brand-mark" id="sidebarBrandImg" />
         </button>
 
-        <div class="app-sidebar__active-bg" aria-hidden="true"></div>
+        <div class="app-sidebar__active-bg" aria-hidden="true" id="sidebarActiveBg"></div>
 
-        <button class="app-sidebar__item app-sidebar__item--active app-sidebar__item--home" type="button" aria-label="Home">
+        <button class="app-sidebar__item app-sidebar__item--active app-sidebar__item--home" id="homeBtn" type="button" aria-label="Home">
           ${iconHome()}
-        </button>
-
-        <button class="app-sidebar__item app-sidebar__item--apps" type="button" aria-label="Roadmaps">
-          ${iconApps()}
         </button>
 
         <button id="themeToggleBtn" class="app-sidebar__item app-sidebar__item--theme" type="button" aria-label="Toggle theme">
           <span class="theme-icon-container"></span>
         </button>
 
-        <button class="app-sidebar__item app-sidebar__item--settings" type="button" aria-label="Settings">
-          ${iconSettings()}
-        </button>
-
-        <button id="logoutBtn" class="app-sidebar__item app-sidebar__item--profile" type="button" aria-label="Sign out">
+        <button id="profileBtn" class="app-sidebar__item app-sidebar__item--profile" type="button" aria-label="Sign out">
           ${iconProfile()}
         </button>
       </div>
 
       <div class="app-sidebar__panel" aria-hidden="true">
         <div class="app-sidebar__panel-frame">
-          <div class="app-sidebar__panel-surface"></div>
+          <div class="app-sidebar__panel-surface">
+            <div id="sidebarContentRoadmaps" style="display: none; height: 100%;"></div>
+            <div id="sidebarContentProfile" style="display: none; height: 100%; position: relative;">
+               <div style="position: absolute; bottom: 33px; left: 23px;">
+                  <p id="sidebarProfileUsername" style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 20px; color: var(--sidebar-icon); margin: 0; line-height: normal;">Username</p>
+                  <p id="sidebarProfileEmail" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 14px; color: #676767; margin: 0; line-height: normal; margin-top: 4px;">email@gmail.com</p>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -140,19 +125,86 @@
     const themeIconContainer = themeBtn.querySelector(".theme-icon-container");
     const brandImg = document.getElementById("sidebarBrandImg");
     const homeImg = document.getElementById("sidebarHomeImg");
-    const appsImg = document.getElementById("sidebarAppsImg");
+    
+    // Sidebar behavior
+    const homeBtn = document.getElementById("homeBtn");
+    const profileBtn = document.getElementById("profileBtn");
+    const sidebarRoadmaps = document.getElementById("sidebarContentRoadmaps");
+    const sidebarProfile = document.getElementById("sidebarContentProfile");
+    const sidebarActiveBg = document.getElementById("sidebarActiveBg");
+
+    let currentOpenPanel = null; // 'home' or 'profile' or null
+
+    function closeSidebar() {
+      sidebar.classList.remove("is-open");
+      currentOpenPanel = null;
+      homeBtn.classList.remove("app-sidebar__item--active");
+      profileBtn.classList.remove("app-sidebar__item--active");
+    }
+
+    function openSidebar(panelName) {
+      // Toggle off if clicking the same panel
+      if (currentOpenPanel === panelName) {
+        closeSidebar();
+        return;
+      }
+      
+      sidebar.classList.add("is-open");
+      currentOpenPanel = panelName;
+      
+      // Update active state and background position
+      homeBtn.classList.remove("app-sidebar__item--active");
+      profileBtn.classList.remove("app-sidebar__item--active");
+      
+      if (panelName === 'home') {
+        homeBtn.classList.add("app-sidebar__item--active");
+        sidebarActiveBg.style.top = "116px";
+        if (sidebarRoadmaps) sidebarRoadmaps.style.display = "block";
+        if (sidebarProfile) sidebarProfile.style.display = "none";
+      } else if (panelName === 'profile') {
+        profileBtn.classList.add("app-sidebar__item--active");
+        sidebarActiveBg.style.top = "15px"; // bottom:30px is 1024-30-24 = 970. Actually, we can use CSS transform or bottom coordinate.
+        sidebarActiveBg.style.top = "auto";
+        sidebarActiveBg.style.bottom = "18px"; // profile btn is at bottom 30px, btn height 24, bg is 48. Let's do bottom: 18px.
+        if (sidebarRoadmaps) sidebarRoadmaps.style.display = "none";
+        if (sidebarProfile) sidebarProfile.style.display = "block";
+        
+        // Populate profile info if available
+        const username = localStorage.getItem("username") || "Username";
+        const email = localStorage.getItem("email") || "email@gmail.com";
+        const nameEl = document.getElementById("sidebarProfileUsername");
+        const emailEl = document.getElementById("sidebarProfileEmail");
+        if(nameEl) nameEl.textContent = username;
+        if(emailEl) emailEl.textContent = email;
+      }
+    }
+
+    homeBtn.addEventListener("click", () => {
+      sidebarActiveBg.style.bottom = "auto";
+      sidebarActiveBg.style.top = "116px";
+      openSidebar('home');
+    });
+
+    profileBtn.addEventListener("click", () => {
+      openSidebar('profile');
+    });
+
+    // Close on click outside
+    document.addEventListener("click", (e) => {
+      if (!sidebar.contains(e.target) && currentOpenPanel !== null) {
+        closeSidebar();
+      }
+    });
 
     function updateThemeUI(theme) {
       if (theme === "dark") {
         themeIconContainer.innerHTML = iconThemeMoon();
         brandImg.src = "src/alpha-dark.png";
         if (homeImg) homeImg.src = "src/home_dark.svg";
-        if (appsImg) appsImg.src = "src/skills_dark.svg";
       } else {
         themeIconContainer.innerHTML = iconThemeSun();
         brandImg.src = "src/alpha.png";
         if (homeImg) homeImg.src = "src/house.svg";
-        if (appsImg) appsImg.src = "src/skills.svg";
       }
     }
 
