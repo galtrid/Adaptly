@@ -82,7 +82,7 @@ body {
 .layout { display: flex; min-height: 100vh; justify-content: center; }
 
 /* Main */
-.main { width: 100%; max-width: 700px; padding: 32px; }
+.main { width: 100%; max-width: 900px; padding: 32px; }
 
 /* Hero */
 .hero {
@@ -176,7 +176,7 @@ body {
   padding: 10px 20px 60px;
 }
 
-.path-node { width: 265px; position: relative; }
+.path-node { width: 320px; position: relative; }
 .node-left  { align-self: flex-start; margin-left: 10px; }
 .node-right { align-self: flex-end;   margin-right: 10px; }
 
