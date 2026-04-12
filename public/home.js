@@ -18,10 +18,34 @@ function setupSidebarRoadmaps() {
     surface.innerHTML = `
         <div class="sidebar-roadmaps">
             <p class="sidebar-roadmaps__title" style="margin-top: 0; padding-top: 10px;">My Roadmaps</p>
+            <input type="text" id="roadmapSearch" class="sidebar-roadmaps__search" placeholder="Search roadmaps…">
             <div id="roadmapsList"></div>
         </div>
     `;
+    document.getElementById("roadmapSearch").addEventListener("input", e => filterRoadmaps(e.target.value));
 }
+
+function filterRoadmaps(query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll(".sidebar-roadmap-item").forEach(el => {
+        el.style.display = el.dataset.title.toLowerCase().includes(q) ? "" : "none";
+    });
+}
+
+// Due date helpers — stored in localStorage per roadmap id
+function getDueDate(id) { return localStorage.getItem(`due_${id}`) || ""; }
+function setDueDate(id, val) {
+    if (val) localStorage.setItem(`due_${id}`, val);
+    else localStorage.removeItem(`due_${id}`);
+}
+function formatDue(dateStr) {
+    if (!dateStr) return "";
+    const days = Math.round((new Date(dateStr) - new Date()) / 86400000);
+    if (days < 0) return `${Math.abs(days)}d overdue`;
+    if (days === 0) return "Due today";
+    return `in ${days}d`;
+}
+function isOverdue(dateStr) { return !!dateStr && new Date(dateStr) < new Date(); }
 
 async function loadRoadmaps() {
     try {
@@ -30,17 +54,48 @@ async function loadRoadmaps() {
         if (!list) return;
         if (!data.roadmaps.length) { list.innerHTML = `<p class="sidebar-roadmaps__empty" style="margin-top: 10px; color: #676767; font-family: 'Inter', sans-serif; font-size: 14px;">No Roadmaps available</p>`; return; }
 
-        list.innerHTML = data.roadmaps.map(r =>
-            `<div class="sidebar-roadmap-item" data-id="${r.id}" data-title="${r.title.replace(/"/g, '&quot;')}">
-                <span>${r.title}</span>
+        list.innerHTML = data.roadmaps.map(r => {
+            const pct = r.total_items > 0 ? Math.round((r.completed_items / r.total_items) * 100) : 0;
+            const due = getDueDate(r.id);
+            const dueLabel = formatDue(due);
+            const over = isOverdue(due);
+            return `<div class="sidebar-roadmap-item" data-id="${r.id}" data-title="${r.title.replace(/"/g, '&quot;')}">
+                <div class="rm-info">
+                    <span class="rm-title">${r.title}</span>
+                    <div class="rm-meta">
+                        <span class="rm-progress">${pct}%</span>
+                        <label class="rm-due-label${over ? " rm-due--over" : ""}" title="Set due date">
+                            <input type="date" class="rm-due-input" value="${due}">
+                            <span class="rm-due-display">${dueLabel || "📅"}</span>
+                        </label>
+                    </div>
+                </div>
                 <button class="rm-delete-btn" title="Delete">🗑</button>
-            </div>`
-        ).join("");
+            </div>`;
+        }).join("");
 
         list.querySelectorAll(".sidebar-roadmap-item").forEach(el => {
-            el.querySelector("span").addEventListener("click", () => loadRoadmap(+el.dataset.id, el.dataset.title));
+            el.querySelector(".rm-title").addEventListener("click", () => loadRoadmap(+el.dataset.id, el.dataset.title));
             el.querySelector(".rm-delete-btn").addEventListener("click", e => { e.stopPropagation(); deleteRoadmap(+el.dataset.id); });
+
+            const dateInput = el.querySelector(".rm-due-input");
+            const dueLabel = el.querySelector(".rm-due-label");
+            const dueDisplay = el.querySelector(".rm-due-display");
+
+            // clicking the display opens the native date picker
+            dueDisplay.addEventListener("click", e => {
+                e.stopPropagation();
+                try { dateInput.showPicker(); } catch { dateInput.click(); }
+            });
+            dateInput.addEventListener("change", () => {
+                setDueDate(+el.dataset.id, dateInput.value);
+                dueDisplay.textContent = formatDue(dateInput.value) || "📅";
+                dueLabel.classList.toggle("rm-due--over", isOverdue(dateInput.value));
+            });
         });
+
+        const q = document.getElementById("roadmapSearch")?.value;
+        if (q) filterRoadmaps(q);
     } catch (err) {
         console.error("Failed to load roadmaps:", err);
     }
@@ -145,6 +200,12 @@ function renderRoadmap(roadmap) {
 
     canvas.innerHTML = `<div class="roadmap-path">${phases.map((phase, i) => {
         const state = states[i];
+
+        // Parse optional "[X weeks]" time estimate embedded in phase text
+        const timeMatch = phase.text.match(/\[([^\]]+)\]$/);
+        const phaseTitle = timeMatch ? phase.text.slice(0, timeMatch.index).trim() : phase.text;
+        const timeBadge = timeMatch ? `<span class="phase-time">${timeMatch[1]}</span>` : "";
+
         const tasks = phase.children.map(t => `
             <label class="task-item ${t.completed ? "task-item--done" : ""} ${t.indent_level === 2 ? "task-item--sub" : ""}">
                 <input type="checkbox" data-id="${t.id}" ${t.completed ? "checked" : ""} ${state === "locked" ? "disabled" : ""}>
@@ -156,7 +217,8 @@ function renderRoadmap(roadmap) {
             <div class="path-node path-node--${state} ${sides[i % 2]}" data-index="${i}">
                 <div class="path-node__bubble">
                     <div class="path-node__icon">${icons[state]}</div>
-                    <div class="path-node__title">${phase.text}</div>
+                    <div class="path-node__title">${phaseTitle}</div>
+                    ${timeBadge}
                     ${phase.children.length ? '<div class="path-node__chevron">▾</div>' : ""}
                 </div>
                 ${phase.children.length ? `<div class="path-node__tasks" style="display:none">${tasks}</div>` : ""}

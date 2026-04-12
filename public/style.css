@@ -231,6 +231,20 @@ body {
 }
 .path-line--done { background: linear-gradient(to bottom, #86efac, #4ade80); }
 
+/* Phase time estimate badge */
+.phase-time {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.path-node--completed .phase-time { background: #dcfce7; color: #16a34a; }
+.path-node--locked    .phase-time { background: #f3f4f6; color: #9ca3af; }
+
 /* Inline task editing */
 .task-edit-input {
   flex: 1; border: 1.5px solid #7c3aed; border-radius: 4px;

@@ -14,11 +14,11 @@ async function generate(req, res) {
             `Create a detailed learning roadmap for ${skill}.
 Return ONLY a JSON array of objects like:
 [
-  { "text": "Phase 1: Basics", "indent": 0 },
+  { "text": "Phase 1: Basics [1-2 weeks]", "indent": 0 },
   { "text": "Variables & Data Types", "indent": 1 },
-  { "text": "Read: JavaScript.info chapter 1", "indent": 2 }
+  { "text": "Read: JavaScript.info chapter 1 and learning material recommendations", "indent": 2 }
 ]
-indent 0 = main topic, indent 1 = subtopic, indent 2 = learning material/resource`
+indent 0 = main phase header (append a realistic time estimate in square brackets at the end, e.g. "[2 weeks]"), indent 1 = subtopic, indent 2 = learning material/resource`
         );
 
         const items = extractJSON(aiResponse);
@@ -55,12 +55,17 @@ indent 0 = main topic, indent 1 = subtopic, indent 2 = learning material/resourc
     }
 }
 
-// Get all roadmaps for the logged-in user
+// Get all roadmaps for the logged-in user, with progress counts
 async function getUserRoadmaps(req, res) {
-    const [rows] = await db.query(
-        "SELECT * FROM roadmaps WHERE user_id = ?",
-        [req.user.id]
-    );
+    const [rows] = await db.query(`
+        SELECT r.*,
+            COUNT(ri.id) AS total_items,
+            COALESCE(SUM(ri.completed), 0) AS completed_items
+        FROM roadmaps r
+        LEFT JOIN roadmap_items ri ON ri.roadmap_id = r.id AND ri.indent_level > 0
+        WHERE r.user_id = ?
+        GROUP BY r.id
+    `, [req.user.id]);
     res.json({ roadmaps: rows });
 }
 
