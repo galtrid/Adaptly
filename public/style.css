@@ -25,6 +25,51 @@ body {
   color: #1e1b4b;
 }
 
+/* Floating blobs */
+@keyframes float1 {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(80px, -80px); }
+  50%  { transform: translate(140px, -30px); }
+  75%  { transform: translate(60px, 60px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes float2 {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-90px, 60px); }
+  50%  { transform: translate(-140px, -40px); }
+  75%  { transform: translate(-50px, -80px); }
+  100% { transform: translate(0, 0); }
+}
+
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.blob--1 {
+  width: 420px;
+  height: 420px;
+  background: #c084fc;
+  top: -80px;
+  right: 10%;
+  animation: float1 8s ease-in-out infinite;
+}
+
+.blob--2 {
+  width: 360px;
+  height: 360px;
+  background: #f472b6;
+  bottom: 5%;
+  left: 15%;
+  animation: float2 11s ease-in-out infinite;
+}
+
+.layout { position: relative; z-index: 1; }
+
 /* Smooth page load */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
