@@ -14,7 +14,9 @@ function requireAuth(req, res, next) {
 router.post("/generate",             requireAuth, controller.generate);
 router.get("/user",                  requireAuth, controller.getUserRoadmaps);
 router.get("/:id/items",             requireAuth, controller.getRoadmapItems);
+router.post("/:id/items",            requireAuth, controller.addItem);
 router.delete("/:id",                requireAuth, controller.deleteRoadmap);
+router.delete("/items/:id",          requireAuth, controller.deleteItem);
 router.patch("/items/:id/complete",  requireAuth, controller.updateComplete);
 router.patch("/items/:id/text",      requireAuth, controller.updateItemText);
 

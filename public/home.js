@@ -108,15 +108,23 @@ async function deleteRoadmap(id) {
     loadRoadmaps();
 }
 
+let currentRoadmap = null;
+
 async function loadRoadmap(id, title) {
     try {
         const data = await apiFetch(`/roadmap/${id}/items`);
-        const roadmap = { id, title, items: data.items.map(item => ({ id: item.id, text: item.text, indent_level: item.indent_level, completed: item.completed })) };
-        renderRoadmap(roadmap);
+        currentRoadmap = { id, title, items: data.items.map(item => ({ id: item.id, text: item.text, indent_level: item.indent_level, completed: item.completed, sort_order: item.sort_order })) };
+        renderRoadmap(currentRoadmap);
         document.getElementById("roadmapSection").style.display = "block";
     } catch (err) {
         console.error("Failed to load roadmap:", err);
     }
+}
+
+async function reloadCurrentRoadmap() {
+    if (!currentRoadmap) return;
+    await loadRoadmap(currentRoadmap.id, currentRoadmap.title);
+    loadRoadmaps();
 }
 
 async function apiFetch(path, method = "GET", body) {
@@ -210,18 +218,26 @@ function renderRoadmap(roadmap) {
             <label class="task-item ${t.completed ? "task-item--done" : ""} ${t.indent_level === 2 ? "task-item--sub" : ""}">
                 <input type="checkbox" data-id="${t.id}" ${t.completed ? "checked" : ""} ${state === "locked" ? "disabled" : ""}>
                 <span>${t.text}</span>
+                ${state !== "locked" ? `<button class="task-delete-btn" data-id="${t.id}" title="Remove task">✕</button>` : ""}
             </label>`).join("");
+
+        const lastChildSort = phase.children.length ? phase.children[phase.children.length - 1].sort_order : phase.sort_order;
+        const hasPanel = phase.children.length > 0 || state !== "locked";
 
         return `
             ${i > 0 ? `<div class="path-line ${states[i-1] === "completed" ? "path-line--done" : ""}"></div>` : ""}
             <div class="path-node path-node--${state} ${sides[i % 2]}" data-index="${i}">
                 <div class="path-node__bubble">
                     <div class="path-node__icon">${icons[state]}</div>
-                    <div class="path-node__title">${phaseTitle}</div>
+                    <div class="path-node__title" data-phase-id="${phase.id}" data-phase-text="${phase.text.replace(/"/g, '&quot;')}" title="Double-click to edit">${phaseTitle}</div>
                     ${timeBadge}
-                    ${phase.children.length ? '<div class="path-node__chevron">▾</div>' : ""}
+                    ${hasPanel ? '<div class="path-node__chevron">▾</div>' : ""}
+                    ${state !== "locked" ? `<button class="phase-delete-btn" data-id="${phase.id}" title="Delete phase">✕</button>` : ""}
                 </div>
-                ${phase.children.length ? `<div class="path-node__tasks" style="display:none">${tasks}</div>` : ""}
+                ${hasPanel ? `<div class="path-node__tasks" style="display:none">
+                    ${tasks}
+                    ${state !== "locked" ? `<button class="add-task-btn" data-roadmap-id="${roadmap.id}" data-after-sort="${lastChildSort}">+ Add task</button>` : ""}
+                </div>` : ""}
             </div>`;
     }).join("")}</div>`;
 
@@ -274,6 +290,94 @@ function renderRoadmap(roadmap) {
         };
         inp.addEventListener("blur", save, { once: true });
         inp.addEventListener("keydown", e => e.key === "Enter" && inp.blur());
+    });
+
+    // Phase title — double-click to edit
+    canvas.querySelectorAll(".path-node__title").forEach(titleEl => {
+        titleEl.addEventListener("dblclick", e => {
+            e.stopPropagation();
+            editPhaseTitle(titleEl);
+        });
+    });
+
+    // Delete phase
+    canvas.querySelectorAll(".phase-delete-btn").forEach(btn => {
+        btn.addEventListener("click", async e => {
+            e.stopPropagation();
+            if (!confirm("Delete this phase and all its tasks?")) return;
+            await apiFetch(`/roadmap/items/${btn.dataset.id}`, "DELETE");
+            reloadCurrentRoadmap();
+        });
+    });
+
+    // Delete task
+    canvas.querySelectorAll(".task-delete-btn").forEach(btn => {
+        btn.addEventListener("click", async e => {
+            e.stopPropagation();
+            e.preventDefault();
+            await apiFetch(`/roadmap/items/${btn.dataset.id}`, "DELETE");
+            btn.closest("label").remove();
+            refreshPhaseStates();
+            loadRoadmaps();
+        });
+    });
+
+    // Add task
+    canvas.querySelectorAll(".add-task-btn").forEach(btn => {
+        btn.addEventListener("click", () => showInlineInput(btn, "task-add-input", "New task name…", async text => {
+            await apiFetch(`/roadmap/${btn.dataset.roadmapId}/items`, "POST", { text, indent_level: 1, after_sort_order: +btn.dataset.afterSort });
+            reloadCurrentRoadmap();
+        }));
+    });
+
+}
+
+function editPhaseTitle(titleEl) {
+    const phaseId = titleEl.dataset.phaseId;
+    const fullText = titleEl.dataset.phaseText;
+    const inp = document.createElement("input");
+    inp.className = "task-edit-input";
+    inp.value = fullText;
+    titleEl.replaceWith(inp);
+    inp.focus();
+    inp.select();
+
+    const save = async () => {
+        const text = inp.value.trim() || fullText;
+        if (text !== fullText) await apiFetch(`/roadmap/items/${phaseId}/text`, "PATCH", { text });
+        const timeMatch = text.match(/\[([^\]]+)\]$/);
+        const displayTitle = timeMatch ? text.slice(0, timeMatch.index).trim() : text;
+        const newEl = document.createElement("div");
+        newEl.className = "path-node__title";
+        newEl.dataset.phaseId = phaseId;
+        newEl.dataset.phaseText = text;
+        newEl.title = "Double-click to edit";
+        newEl.textContent = displayTitle;
+        newEl.addEventListener("dblclick", e => { e.stopPropagation(); editPhaseTitle(newEl); });
+        inp.replaceWith(newEl);
+    };
+    inp.addEventListener("blur", save, { once: true });
+    inp.addEventListener("keydown", e => e.key === "Enter" && inp.blur());
+}
+
+function showInlineInput(anchorEl, className, placeholder, onSave) {
+    anchorEl.style.display = "none";
+    const inp = document.createElement("input");
+    inp.className = className;
+    inp.placeholder = placeholder;
+    anchorEl.parentNode.insertBefore(inp, anchorEl);
+    inp.focus();
+
+    const finish = async () => {
+        const text = inp.value.trim();
+        inp.remove();
+        anchorEl.style.display = "";
+        if (text) await onSave(text);
+    };
+    inp.addEventListener("blur", finish, { once: true });
+    inp.addEventListener("keydown", e => {
+        if (e.key === "Enter") inp.blur();
+        if (e.key === "Escape") { inp.value = ""; inp.blur(); }
     });
 }
 
