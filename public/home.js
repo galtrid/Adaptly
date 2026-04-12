@@ -218,11 +218,10 @@ function renderRoadmap(roadmap) {
             <label class="task-item ${t.completed ? "task-item--done" : ""} ${t.indent_level === 2 ? "task-item--sub" : ""}">
                 <input type="checkbox" data-id="${t.id}" ${t.completed ? "checked" : ""} ${state === "locked" ? "disabled" : ""}>
                 <span>${t.text}</span>
-                ${state !== "locked" ? `<button class="task-delete-btn" data-id="${t.id}" title="Remove task">✕</button>` : ""}
+                <button class="task-delete-btn" data-id="${t.id}" title="Remove task">✕</button>
             </label>`).join("");
 
         const lastChildSort = phase.children.length ? phase.children[phase.children.length - 1].sort_order : phase.sort_order;
-        const hasPanel = phase.children.length > 0 || state !== "locked";
 
         return `
             ${i > 0 ? `<div class="path-line ${states[i-1] === "completed" ? "path-line--done" : ""}"></div>` : ""}
@@ -231,13 +230,13 @@ function renderRoadmap(roadmap) {
                     <div class="path-node__icon">${icons[state]}</div>
                     <div class="path-node__title" data-phase-id="${phase.id}" data-phase-text="${phase.text.replace(/"/g, '&quot;')}" title="Double-click to edit">${phaseTitle}</div>
                     ${timeBadge}
-                    ${hasPanel ? '<div class="path-node__chevron">▾</div>' : ""}
-                    ${state !== "locked" ? `<button class="phase-delete-btn" data-id="${phase.id}" title="Delete phase">✕</button>` : ""}
+                    <div class="path-node__chevron">▾</div>
+                    <button class="phase-delete-btn" data-id="${phase.id}" title="Delete phase">✕</button>
                 </div>
-                ${hasPanel ? `<div class="path-node__tasks" style="display:none">
+                <div class="path-node__tasks" style="display:none">
                     ${tasks}
-                    ${state !== "locked" ? `<button class="add-task-btn" data-roadmap-id="${roadmap.id}" data-after-sort="${lastChildSort}">+ Add task</button>` : ""}
-                </div>` : ""}
+                    <button class="add-task-btn" data-roadmap-id="${roadmap.id}" data-after-sort="${lastChildSort}">+ Add task</button>
+                </div>
             </div>`;
     }).join("")}</div>`;
 
@@ -245,7 +244,6 @@ function renderRoadmap(roadmap) {
     canvas.querySelectorAll(".path-node__bubble").forEach(bubble => {
         bubble.addEventListener("click", () => {
             const node = bubble.closest(".path-node");
-            if (node.classList.contains("path-node--locked")) return;
             const panel = node.querySelector(".path-node__tasks");
             if (!panel) return;
             const open = panel.style.display !== "none";
@@ -254,12 +252,13 @@ function renderRoadmap(roadmap) {
         });
     });
 
-    // Checkbox changes → save + refresh states
+    // Checkbox changes → save + refresh states + update sidebar progress
     canvas.querySelectorAll("input[type=checkbox]").forEach(cb => {
         cb.addEventListener("change", () => {
             apiFetch(`/roadmap/items/${cb.dataset.id}/complete`, "PATCH", { completed: cb.checked });
             cb.closest("label").classList.toggle("task-item--done", cb.checked);
             refreshPhaseStates();
+            loadRoadmaps();
         });
     });
 

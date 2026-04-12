@@ -181,7 +181,7 @@ body {
 .path-node__bubble:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(109,40,217,0.16); }
 .path-node--completed .path-node__bubble { border-color: #4ade80; background: #f0fdf4; }
 .path-node--current   .path-node__bubble { border-color: #7c3aed; box-shadow: 0 4px 18px rgba(109,40,217,0.22); }
-.path-node--locked    .path-node__bubble { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.path-node--locked    .path-node__bubble { opacity: 0.55; cursor: pointer; }
 
 .path-node__icon {
   width: 36px; height: 36px;
