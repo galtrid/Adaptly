@@ -156,7 +156,16 @@ document.getElementById("generateForm").addEventListener("submit", async (e) => 
     btn.disabled = true;
     status.textContent = "Generating...";
     document.getElementById("roadmapSection").style.display = "block";
-    canvas.innerHTML = "Loading...";
+    canvas.innerHTML = `
+        <div class="skeleton-path">
+            <div class="skeleton-node skeleton-node--left"></div>
+            <div class="skeleton-line-v"></div>
+            <div class="skeleton-node skeleton-node--right"></div>
+            <div class="skeleton-line-v"></div>
+            <div class="skeleton-node skeleton-node--left"></div>
+            <div class="skeleton-line-v"></div>
+            <div class="skeleton-node skeleton-node--right"></div>
+        </div>`;
 
     try {
         const data = await apiFetch("/roadmap/generate", "POST", { skill });
@@ -200,6 +209,7 @@ function getPhaseStates(phases) {
 function renderRoadmap(roadmap) {
     const canvas = document.getElementById("roadmapCanvas");
     document.getElementById("roadmapTitle").textContent = roadmap.title || "Roadmap";
+    document.getElementById("completionBanner")?.remove();
 
     const phases = groupIntoPhases(roadmap.items);
     const states = getPhaseStates(phases);
@@ -259,6 +269,7 @@ function renderRoadmap(roadmap) {
             cb.closest("label").classList.toggle("task-item--done", cb.checked);
             refreshPhaseStates();
             loadRoadmaps();
+            checkCompletion();
         });
     });
 
@@ -378,6 +389,29 @@ function showInlineInput(anchorEl, className, placeholder, onSave) {
         if (e.key === "Enter") inp.blur();
         if (e.key === "Escape") { inp.value = ""; inp.blur(); }
     });
+}
+
+function checkCompletion() {
+    const allBoxes = [...document.querySelectorAll("#roadmapCanvas input[type=checkbox]")];
+    if (allBoxes.length > 0 && allBoxes.every(cb => cb.checked)) {
+        showCompletionBanner();
+    }
+}
+
+function showCompletionBanner() {
+    if (document.getElementById("completionBanner")) return;
+    const banner = document.createElement("div");
+    banner.id = "completionBanner";
+    banner.className = "completion-banner";
+    banner.innerHTML = `
+        <div class="completion-banner__confetti">🎉</div>
+        <div class="completion-banner__body">
+            <p class="completion-banner__title">Roadmap Complete!</p>
+            <p class="completion-banner__sub">Amazing work — you finished every phase. What will you learn next?</p>
+        </div>
+        <button class="completion-banner__close" onclick="this.closest('.completion-banner').remove()">✕</button>
+    `;
+    document.getElementById("roadmapSection").prepend(banner);
 }
 
 function refreshPhaseStates() {
