@@ -1,7 +1,9 @@
 async function checkAuth() {
     try {
         const res = await fetch("/roadmap/user", { credentials: "include" });
-        if (!res.ok) window.location.href = "login.html";
+        if (!res.ok) {
+            window.location.href = "login.html";
+        }
     } catch {
         window.location.href = "login.html";
     }
@@ -15,6 +17,7 @@ function loadUser() {
 function setupSidebarRoadmaps() {
     const surface = document.getElementById("sidebarContentRoadmaps");
     if (!surface) return;
+
     surface.innerHTML = `
         <div class="sidebar-roadmaps">
             <p class="sidebar-roadmaps__title" style="margin-top: 0; padding-top: 10px;">My Roadmaps</p>
@@ -22,49 +25,69 @@ function setupSidebarRoadmaps() {
             <div id="roadmapsList"></div>
         </div>
     `;
-    document.getElementById("roadmapSearch").addEventListener("input", e => filterRoadmaps(e.target.value));
-}
 
-function filterRoadmaps(query) {
-    const q = query.toLowerCase();
-    document.querySelectorAll(".sidebar-roadmap-item").forEach(el => {
-        el.style.display = el.dataset.title.toLowerCase().includes(q) ? "" : "none";
+    document.getElementById("roadmapSearch").addEventListener("input", function(e) {
+        filterRoadmaps(e.target.value);
     });
 }
 
-// Due date helpers — stored in localStorage per roadmap id
-function getDueDate(id) { return localStorage.getItem(`due_${id}`) || ""; }
-function setDueDate(id, val) {
-    if (val) localStorage.setItem(`due_${id}`, val);
-    else localStorage.removeItem(`due_${id}`);
+function filterRoadmaps(query) {
+    const items = document.querySelectorAll(".sidebar-roadmap-item");
+    items.forEach(function(el) {
+        const title = el.dataset.title.toLowerCase();
+        el.style.display = title.includes(query.toLowerCase()) ? "" : "none";
+    });
 }
+
+function getDueDate(id) {
+    return localStorage.getItem("due_" + id) || "";
+}
+
+function setDueDate(id, value) {
+    if (value) {
+        localStorage.setItem("due_" + id, value);
+    } else {
+        localStorage.removeItem("due_" + id);
+    }
+}
+
 function formatDue(dateStr) {
     if (!dateStr) return "";
     const days = Math.round((new Date(dateStr) - new Date()) / 86400000);
-    if (days < 0) return `${Math.abs(days)}d overdue`;
+    if (days < 0) return Math.abs(days) + "d overdue";
     if (days === 0) return "Due today";
-    return `in ${days}d`;
+    return "in " + days + "d";
 }
-function isOverdue(dateStr) { return !!dateStr && new Date(dateStr) < new Date(); }
+
+function isOverdue(dateStr) {
+    return !!dateStr && new Date(dateStr) < new Date();
+}
 
 async function loadRoadmaps() {
+    const list = document.getElementById("roadmapsList");
+    if (!list) return;
+
     try {
         const data = await apiFetch("/roadmap/user");
-        const list = document.getElementById("roadmapsList");
-        if (!list) return;
-        if (!data.roadmaps.length) { list.innerHTML = `<p class="sidebar-roadmaps__empty" style="margin-top: 10px; color: #676767; font-family: 'Inter', sans-serif; font-size: 14px;">No Roadmaps available</p>`; return; }
+        const roadmaps = data.roadmaps;
 
-        list.innerHTML = data.roadmaps.map(r => {
+        if (!roadmaps.length) {
+            list.innerHTML = `<p class="sidebar-roadmaps__empty" style="margin-top: 10px; color: #676767; font-size: 14px;">No Roadmaps available</p>`;
+            return;
+        }
+
+        list.innerHTML = roadmaps.map(function(r) {
             const pct = r.total_items > 0 ? Math.round((r.completed_items / r.total_items) * 100) : 0;
             const due = getDueDate(r.id);
             const dueLabel = formatDue(due);
-            const over = isOverdue(due);
+            const overdue = isOverdue(due);
+
             return `<div class="sidebar-roadmap-item" data-id="${r.id}" data-title="${r.title.replace(/"/g, '&quot;')}">
                 <div class="rm-info">
                     <span class="rm-title">${r.title}</span>
                     <div class="rm-meta">
                         <span class="rm-progress">${pct}%</span>
-                        <label class="rm-due-label${over ? " rm-due--over" : ""}" title="Set due date">
+                        <label class="rm-due-label${overdue ? " rm-due--over" : ""}" title="Set due date">
                             <input type="date" class="rm-due-input" value="${due}">
                             <span class="rm-due-display">${dueLabel || "📅"}</span>
                         </label>
@@ -74,28 +97,35 @@ async function loadRoadmaps() {
             </div>`;
         }).join("");
 
-        list.querySelectorAll(".sidebar-roadmap-item").forEach(el => {
-            el.querySelector(".rm-title").addEventListener("click", () => loadRoadmap(+el.dataset.id, el.dataset.title));
-            el.querySelector(".rm-delete-btn").addEventListener("click", e => { e.stopPropagation(); deleteRoadmap(+el.dataset.id); });
+        list.querySelectorAll(".sidebar-roadmap-item").forEach(function(el) {
+            el.querySelector(".rm-title").addEventListener("click", function() {
+                loadRoadmap(+el.dataset.id, el.dataset.title);
+            });
+
+            el.querySelector(".rm-delete-btn").addEventListener("click", function(e) {
+                e.stopPropagation();
+                deleteRoadmap(+el.dataset.id);
+            });
 
             const dateInput = el.querySelector(".rm-due-input");
             const dueLabel = el.querySelector(".rm-due-label");
             const dueDisplay = el.querySelector(".rm-due-display");
 
-            // clicking the display opens the native date picker
-            dueDisplay.addEventListener("click", e => {
+            dueDisplay.addEventListener("click", function(e) {
                 e.stopPropagation();
                 try { dateInput.showPicker(); } catch { dateInput.click(); }
             });
-            dateInput.addEventListener("change", () => {
+
+            dateInput.addEventListener("change", function() {
                 setDueDate(+el.dataset.id, dateInput.value);
                 dueDisplay.textContent = formatDue(dateInput.value) || "📅";
                 dueLabel.classList.toggle("rm-due--over", isOverdue(dateInput.value));
             });
         });
 
-        const q = document.getElementById("roadmapSearch")?.value;
-        if (q) filterRoadmaps(q);
+        const searchQuery = document.getElementById("roadmapSearch")?.value;
+        if (searchQuery) filterRoadmaps(searchQuery);
+
     } catch (err) {
         console.error("Failed to load roadmaps:", err);
     }
@@ -103,7 +133,7 @@ async function loadRoadmaps() {
 
 async function deleteRoadmap(id) {
     if (!confirm("Delete this roadmap?")) return;
-    await apiFetch(`/roadmap/${id}`, "DELETE");
+    await apiFetch("/roadmap/" + id, "DELETE");
     document.getElementById("roadmapSection").style.display = "none";
     loadRoadmaps();
 }
@@ -112,8 +142,20 @@ let currentRoadmap = null;
 
 async function loadRoadmap(id, title) {
     try {
-        const data = await apiFetch(`/roadmap/${id}/items`);
-        currentRoadmap = { id, title, items: data.items.map(item => ({ id: item.id, text: item.text, indent_level: item.indent_level, completed: item.completed, sort_order: item.sort_order })) };
+        const data = await apiFetch("/roadmap/" + id + "/items");
+        currentRoadmap = {
+            id: id,
+            title: title,
+            items: data.items.map(function(item) {
+                return {
+                    id: item.id,
+                    text: item.text,
+                    indent_level: item.indent_level,
+                    completed: item.completed,
+                    sort_order: item.sort_order
+                };
+            })
+        };
         renderRoadmap(currentRoadmap);
         document.getElementById("roadmapSection").style.display = "block";
     } catch (err) {
@@ -129,7 +171,7 @@ async function reloadCurrentRoadmap() {
 
 async function apiFetch(path, method = "GET", body) {
     const res = await fetch(path, {
-        method,
+        method: method,
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: body ? JSON.stringify(body) : null
@@ -140,7 +182,7 @@ async function apiFetch(path, method = "GET", body) {
     return data;
 }
 
-document.getElementById("generateForm").addEventListener("submit", async (e) => {
+document.getElementById("generateForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
     const skill = document.getElementById("skillInput").value.trim();
@@ -156,6 +198,7 @@ document.getElementById("generateForm").addEventListener("submit", async (e) => 
     btn.disabled = true;
     status.textContent = "Generating...";
     document.getElementById("roadmapSection").style.display = "block";
+
     canvas.innerHTML = `
         <div class="skeleton-path">
             <div class="skeleton-node skeleton-node--left"></div>
@@ -169,10 +212,9 @@ document.getElementById("generateForm").addEventListener("submit", async (e) => 
 
     try {
         const data = await apiFetch("/roadmap/generate", "POST", { skill });
-
         renderRoadmap(data.roadmap);
         status.textContent = "Done!";
-        loadRoadmaps(); // refresh the list
+        loadRoadmaps();
     } catch (err) {
         status.textContent = "Error: " + err.message;
     } finally {
@@ -180,29 +222,36 @@ document.getElementById("generateForm").addEventListener("submit", async (e) => 
     }
 });
 
-// Group flat items into phases (indent 0 = phase header)
 function groupIntoPhases(items) {
     const phases = [];
-    let current = null;
+    let currentPhase = null;
+
     for (const item of items) {
         if (item.indent_level === 0) {
-            current = { ...item, children: [] };
-            phases.push(current);
-        } else if (current) {
-            current.children.push(item);
+            currentPhase = { ...item, children: [] };
+            phases.push(currentPhase);
+        } else if (currentPhase) {
+            currentPhase.children.push(item);
         }
     }
+
     return phases;
 }
 
-// completed → current → locked (strictly sequential)
 function getPhaseStates(phases) {
     let foundCurrent = false;
-    return phases.map(phase => {
+
+    return phases.map(function(phase) {
         const allDone = phase.children.length > 0 && phase.children.every(c => c.completed);
-        if (foundCurrent)      return "locked";
-        if (allDone)           return "completed";
-        foundCurrent = true;   return "current";
+
+        if (foundCurrent) {
+            return "locked";
+        } else if (allDone) {
+            return "completed";
+        } else {
+            foundCurrent = true;
+            return "current";
+        }
     });
 }
 
@@ -213,29 +262,33 @@ function renderRoadmap(roadmap) {
 
     const phases = groupIntoPhases(roadmap.items);
     const states = getPhaseStates(phases);
-    const icons  = { completed: "✅", current: "⭐", locked: "🔒" };
-    const sides  = ["node-left", "node-right"];
+    const icons = { completed: "✅", current: "⭐", locked: "🔒" };
+    const sides = ["node-left", "node-right"];
 
-    canvas.innerHTML = `<div class="roadmap-path">${phases.map((phase, i) => {
+    canvas.innerHTML = `<div class="roadmap-path">${phases.map(function(phase, i) {
         const state = states[i];
 
-        // Parse optional "[X weeks]" time estimate embedded in phase text
         const timeMatch = phase.text.match(/\[([^\]]+)\]$/);
         const phaseTitle = timeMatch ? phase.text.slice(0, timeMatch.index).trim() : phase.text;
         const timeBadge = timeMatch ? `<span class="phase-time">${timeMatch[1]}</span>` : "";
 
-        const tasks = phase.children.map(t => `
+        const lastChild = phase.children[phase.children.length - 1];
+        const lastChildSort = lastChild ? lastChild.sort_order : phase.sort_order;
+
+        const tasks = phase.children.map(function(t) {
+            return `
             <label class="task-item ${t.completed ? "task-item--done" : ""} ${t.indent_level === 2 ? "task-item--sub" : ""}">
                 <input type="checkbox" data-id="${t.id}" ${t.completed ? "checked" : ""} ${state === "locked" ? "disabled" : ""}>
                 <span>${t.text}</span>
-                <button class="task-delete-btn" data-id="${t.id}" title="Remove task">✕</button>
-            </label>`).join("");
+                <button class="task-delete-btn" data-id="${t.id}" title="Remove">✕</button>
+            </label>`;
+        }).join("");
 
-        const lastChildSort = phase.children.length ? phase.children[phase.children.length - 1].sort_order : phase.sort_order;
+        const pathLine = i > 0 ? `<div class="path-line ${states[i-1] === "completed" ? "path-line--done" : ""}"></div>` : "";
 
         return `
-            ${i > 0 ? `<div class="path-line ${states[i-1] === "completed" ? "path-line--done" : ""}"></div>` : ""}
-            <div class="path-node path-node--${state} ${sides[i % 2]}" data-index="${i}">
+            ${pathLine}
+            <div class="path-node path-node--${state} ${sides[i % 2]}">
                 <div class="path-node__bubble">
                     <div class="path-node__icon">${icons[state]}</div>
                     <div class="path-node__title" data-phase-id="${phase.id}" data-phase-text="${phase.text.replace(/"/g, '&quot;')}" title="Double-click to edit">${phaseTitle}</div>
@@ -250,22 +303,23 @@ function renderRoadmap(roadmap) {
             </div>`;
     }).join("")}</div>`;
 
-    // Expand / collapse on click
-    canvas.querySelectorAll(".path-node__bubble").forEach(bubble => {
-        bubble.addEventListener("click", () => {
+    // Expand / collapse a phase when clicking the bubble
+    canvas.querySelectorAll(".path-node__bubble").forEach(function(bubble) {
+        bubble.addEventListener("click", function() {
             const node = bubble.closest(".path-node");
             const panel = node.querySelector(".path-node__tasks");
             if (!panel) return;
-            const open = panel.style.display !== "none";
-            panel.style.display = open ? "none" : "block";
-            bubble.classList.toggle("is-open", !open);
+
+            const isOpen = panel.style.display !== "none";
+            panel.style.display = isOpen ? "none" : "block";
+            bubble.classList.toggle("is-open", !isOpen);
         });
     });
 
-    // Checkbox changes → save + refresh states + update sidebar progress
-    canvas.querySelectorAll("input[type=checkbox]").forEach(cb => {
-        cb.addEventListener("change", () => {
-            apiFetch(`/roadmap/items/${cb.dataset.id}/complete`, "PATCH", { completed: cb.checked });
+    // Save checkbox state and refresh the phase progress
+    canvas.querySelectorAll("input[type=checkbox]").forEach(function(cb) {
+        cb.addEventListener("change", function() {
+            apiFetch("/roadmap/items/" + cb.dataset.id + "/complete", "PATCH", { completed: cb.checked });
             cb.closest("label").classList.toggle("task-item--done", cb.checked);
             refreshPhaseStates();
             loadRoadmaps();
@@ -273,133 +327,167 @@ function renderRoadmap(roadmap) {
         });
     });
 
-    // Auto-open the current phase
-    const current = canvas.querySelector(".path-node--current");
-    if (current) {
-        const panel = current.querySelector(".path-node__tasks");
-        if (panel) { panel.style.display = "block"; current.querySelector(".path-node__bubble").classList.add("is-open"); }
+    // Auto-open the current phase on load
+    const currentNode = canvas.querySelector(".path-node--current");
+    if (currentNode) {
+        const panel = currentNode.querySelector(".path-node__tasks");
+        if (panel) {
+            panel.style.display = "block";
+            currentNode.querySelector(".path-node__bubble").classList.add("is-open");
+        }
     }
 
-    // Inline editing — double-click any task text to edit
-    canvas.addEventListener("dblclick", e => {
+    // Double-click a task to edit its text
+    canvas.addEventListener("dblclick", function(e) {
         const span = e.target.closest(".task-item span");
-        if (!span || span.querySelector) return; // already an input
+        if (!span) return;
+
         const cb = span.closest("label").querySelector("input[type=checkbox]");
-        const inp = document.createElement("input");
-        inp.value = span.textContent;
-        inp.className = "task-edit-input";
-        span.replaceWith(inp);
-        inp.focus();
-        inp.select();
-        const save = () => {
-            const text = inp.value.trim() || span.textContent;
-            if (text !== span.textContent) apiFetch(`/roadmap/items/${cb.dataset.id}/text`, "PATCH", { text });
-            const s = document.createElement("span");
-            s.textContent = text;
-            inp.replaceWith(s);
-        };
-        inp.addEventListener("blur", save, { once: true });
-        inp.addEventListener("keydown", e => e.key === "Enter" && inp.blur());
+        const input = document.createElement("input");
+        input.value = span.textContent;
+        input.className = "task-edit-input";
+        span.replaceWith(input);
+        input.focus();
+        input.select();
+
+        function saveTaskText() {
+            const text = input.value.trim() || span.textContent;
+            if (text !== span.textContent) {
+                apiFetch("/roadmap/items/" + cb.dataset.id + "/text", "PATCH", { text });
+            }
+            const newSpan = document.createElement("span");
+            newSpan.textContent = text;
+            input.replaceWith(newSpan);
+        }
+
+        input.addEventListener("blur", saveTaskText, { once: true });
+        input.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") input.blur();
+        });
     });
 
-    // Phase title — double-click to edit
-    canvas.querySelectorAll(".path-node__title").forEach(titleEl => {
-        titleEl.addEventListener("dblclick", e => {
+    // Double-click a phase title to edit it
+    canvas.querySelectorAll(".path-node__title").forEach(function(titleEl) {
+        titleEl.addEventListener("dblclick", function(e) {
             e.stopPropagation();
             editPhaseTitle(titleEl);
         });
     });
 
-    // Delete phase
-    canvas.querySelectorAll(".phase-delete-btn").forEach(btn => {
-        btn.addEventListener("click", async e => {
+    // Delete a phase
+    canvas.querySelectorAll(".phase-delete-btn").forEach(function(btn) {
+        btn.addEventListener("click", async function(e) {
             e.stopPropagation();
             if (!confirm("Delete this phase and all its tasks?")) return;
-            await apiFetch(`/roadmap/items/${btn.dataset.id}`, "DELETE");
+            await apiFetch("/roadmap/items/" + btn.dataset.id, "DELETE");
             reloadCurrentRoadmap();
         });
     });
 
-    // Delete task
-    canvas.querySelectorAll(".task-delete-btn").forEach(btn => {
-        btn.addEventListener("click", async e => {
+    // Delete a task
+    canvas.querySelectorAll(".task-delete-btn").forEach(function(btn) {
+        btn.addEventListener("click", async function(e) {
             e.stopPropagation();
             e.preventDefault();
-            await apiFetch(`/roadmap/items/${btn.dataset.id}`, "DELETE");
+            await apiFetch("/roadmap/items/" + btn.dataset.id, "DELETE");
             btn.closest("label").remove();
             refreshPhaseStates();
             loadRoadmaps();
         });
     });
 
-    // Add task
-    canvas.querySelectorAll(".add-task-btn").forEach(btn => {
-        btn.addEventListener("click", () => showInlineInput(btn, "task-add-input", "New task name…", async text => {
-            await apiFetch(`/roadmap/${btn.dataset.roadmapId}/items`, "POST", { text, indent_level: 1, after_sort_order: +btn.dataset.afterSort });
-            reloadCurrentRoadmap();
-        }));
+    // Add a new task inside a phase
+    canvas.querySelectorAll(".add-task-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            showInlineInput(btn, "task-add-input", "New task name…", async function(text) {
+                await apiFetch("/roadmap/" + btn.dataset.roadmapId + "/items", "POST", {
+                    text: text,
+                    indent_level: 1,
+                    after_sort_order: +btn.dataset.afterSort
+                });
+                reloadCurrentRoadmap();
+            });
+        });
     });
-
 }
 
 function editPhaseTitle(titleEl) {
     const phaseId = titleEl.dataset.phaseId;
-    const fullText = titleEl.dataset.phaseText;
-    const inp = document.createElement("input");
-    inp.className = "task-edit-input";
-    inp.value = fullText;
-    titleEl.replaceWith(inp);
-    inp.focus();
-    inp.select();
+    const originalText = titleEl.dataset.phaseText;
 
-    const save = async () => {
-        const text = inp.value.trim() || fullText;
-        if (text !== fullText) await apiFetch(`/roadmap/items/${phaseId}/text`, "PATCH", { text });
+    const input = document.createElement("input");
+    input.className = "task-edit-input";
+    input.value = originalText;
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    async function savePhaseTitleText() {
+        const text = input.value.trim() || originalText;
+
+        if (text !== originalText) {
+            await apiFetch("/roadmap/items/" + phaseId + "/text", "PATCH", { text });
+        }
+
         const timeMatch = text.match(/\[([^\]]+)\]$/);
         const displayTitle = timeMatch ? text.slice(0, timeMatch.index).trim() : text;
-        const newEl = document.createElement("div");
-        newEl.className = "path-node__title";
-        newEl.dataset.phaseId = phaseId;
-        newEl.dataset.phaseText = text;
-        newEl.title = "Double-click to edit";
-        newEl.textContent = displayTitle;
-        newEl.addEventListener("dblclick", e => { e.stopPropagation(); editPhaseTitle(newEl); });
-        inp.replaceWith(newEl);
-    };
-    inp.addEventListener("blur", save, { once: true });
-    inp.addEventListener("keydown", e => e.key === "Enter" && inp.blur());
+
+        const newTitleEl = document.createElement("div");
+        newTitleEl.className = "path-node__title";
+        newTitleEl.dataset.phaseId = phaseId;
+        newTitleEl.dataset.phaseText = text;
+        newTitleEl.title = "Double-click to edit";
+        newTitleEl.textContent = displayTitle;
+
+        newTitleEl.addEventListener("dblclick", function(e) {
+            e.stopPropagation();
+            editPhaseTitle(newTitleEl);
+        });
+
+        input.replaceWith(newTitleEl);
+    }
+
+    input.addEventListener("blur", savePhaseTitleText, { once: true });
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") input.blur();
+    });
 }
 
-function showInlineInput(anchorEl, className, placeholder, onSave) {
-    anchorEl.style.display = "none";
-    const inp = document.createElement("input");
-    inp.className = className;
-    inp.placeholder = placeholder;
-    anchorEl.parentNode.insertBefore(inp, anchorEl);
-    inp.focus();
+function showInlineInput(anchorBtn, className, placeholder, onSave) {
+    anchorBtn.style.display = "none";
 
-    const finish = async () => {
-        const text = inp.value.trim();
-        inp.remove();
-        anchorEl.style.display = "";
+    const input = document.createElement("input");
+    input.className = className;
+    input.placeholder = placeholder;
+    anchorBtn.parentNode.insertBefore(input, anchorBtn);
+    input.focus();
+
+    async function finish() {
+        const text = input.value.trim();
+        input.remove();
+        anchorBtn.style.display = "";
         if (text) await onSave(text);
-    };
-    inp.addEventListener("blur", finish, { once: true });
-    inp.addEventListener("keydown", e => {
-        if (e.key === "Enter") inp.blur();
-        if (e.key === "Escape") { inp.value = ""; inp.blur(); }
+    }
+
+    input.addEventListener("blur", finish, { once: true });
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") input.blur();
+        if (e.key === "Escape") {
+            input.value = "";
+            input.blur();
+        }
     });
 }
 
 function checkCompletion() {
     const allBoxes = [...document.querySelectorAll("#roadmapCanvas input[type=checkbox]")];
-    if (allBoxes.length > 0 && allBoxes.every(cb => cb.checked)) {
-        showCompletionBanner();
-    }
+    const allChecked = allBoxes.length > 0 && allBoxes.every(function(cb) { return cb.checked; });
+    if (allChecked) showCompletionBanner();
 }
 
 function showCompletionBanner() {
     if (document.getElementById("completionBanner")) return;
+
     const banner = document.createElement("div");
     banner.id = "completionBanner";
     banner.className = "completion-banner";
@@ -411,6 +499,7 @@ function showCompletionBanner() {
         </div>
         <button class="completion-banner__close" onclick="this.closest('.completion-banner').remove()">✕</button>
     `;
+
     document.getElementById("roadmapSection").prepend(banner);
 }
 
@@ -419,18 +508,25 @@ function refreshPhaseStates() {
     const icons = { completed: "✅", current: "⭐", locked: "🔒" };
     let foundCurrent = false;
 
-    nodes.forEach((node) => {
+    nodes.forEach(function(node) {
         const boxes = [...node.querySelectorAll("input[type=checkbox]")];
-        const allDone = boxes.length > 0 && boxes.every(cb => cb.checked);
-        const state = foundCurrent ? "locked" : allDone ? "completed" : (foundCurrent = true, "current");
+        const allDone = boxes.length > 0 && boxes.every(function(cb) { return cb.checked; });
+
+        let state;
+        if (foundCurrent) {
+            state = "locked";
+        } else if (allDone) {
+            state = "completed";
+        } else {
+            state = "current";
+            foundCurrent = true;
+        }
 
         node.classList.remove("path-node--completed", "path-node--current", "path-node--locked");
-        node.classList.add(`path-node--${state}`);
-        const icon = node.querySelector(".path-node__icon");
-        if (icon) icon.textContent = icons[state];
-        boxes.forEach(cb => cb.disabled = state === "locked");
+        node.classList.add("path-node--" + state);
+        node.querySelector(".path-node__icon").textContent = icons[state];
+        boxes.forEach(function(cb) { cb.disabled = state === "locked"; });
 
-        // Close locked nodes
         if (state === "locked") {
             const panel = node.querySelector(".path-node__tasks");
             const bubble = node.querySelector(".path-node__bubble");
@@ -439,12 +535,11 @@ function refreshPhaseStates() {
         }
     });
 
-    document.querySelectorAll(".path-line").forEach((line, i) => {
-        line.classList.toggle("path-line--done", nodes[i]?.classList.contains("path-node--completed"));
+    document.querySelectorAll(".path-line").forEach(function(line, i) {
+        const isDone = nodes[i]?.classList.contains("path-node--completed");
+        line.classList.toggle("path-line--done", isDone);
     });
 }
-
-// Removed duplicate logoutBtn listener (handled in sidebar.js)
 
 (async () => {
     await checkAuth();

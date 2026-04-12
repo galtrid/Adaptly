@@ -197,7 +197,6 @@
         if (sidebarProfile) sidebarProfile.style.display = "none";
       } else if (panelName === 'profile') {
         profileBtn.classList.add("app-sidebar__item--active");
-        sidebarActiveBg.style.top = "15px"; // bottom:30px is 1024-30-24 = 970. Actually, we can use CSS transform or bottom coordinate.
         sidebarActiveBg.style.top = "auto";
         sidebarActiveBg.style.bottom = "18px"; // profile btn is at bottom 30px, btn height 24, bg is 48. Let's do bottom: 18px.
         if (sidebarRoadmaps) sidebarRoadmaps.style.display = "none";
